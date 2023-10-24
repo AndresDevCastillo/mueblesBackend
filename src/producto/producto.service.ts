@@ -1,26 +1,65 @@
-import { Injectable } from '@nestjs/common';
-import { CreateProductoDto } from './dto/create-producto.dto';
-import { UpdateProductoDto } from './dto/update-producto.dto';
+import { HttpException, Injectable } from '@nestjs/common';
+import { CreateProductoDto } from './dto/producto.dto';
+import { UpdateProductoDto } from './dto/producto.dto';
+import { InjectModel } from '@nestjs/mongoose';
+import { Producto } from './schema/producto.schema';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class ProductoService {
-  create(createProductoDto: CreateProductoDto) {
-    return 'This action adds a new producto';
+  constructor(
+    @InjectModel(Producto.name) private productoModel: Model<Producto>,
+  ) {}
+  async create(createProductoDto: CreateProductoDto) {
+    try {
+      return await this.productoModel.create(createProductoDto);
+    } catch (error) {
+      this.handleBDerrors(error);
+    }
   }
 
-  findAll() {
-    return `This action returns all producto`;
+  async findAll() {
+    try {
+      return await this.productoModel.find();
+    } catch (error) {
+      this.handleBDerrors(error);
+    }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} producto`;
+  async findOne(id: number) {
+    try {
+      return await this.productoModel.findById(id);
+    } catch (error) {
+      this.handleBDerrors(error);
+    }
   }
 
-  update(id: number, updateProductoDto: UpdateProductoDto) {
-    return `This action updates a #${id} producto`;
+  async update(updateProductoDto: UpdateProductoDto) {
+    try {
+      return await this.productoModel.findByIdAndUpdate(
+        updateProductoDto.id,
+        updateProductoDto,
+      );
+    } catch (error) {
+      this.handleBDerrors(error);
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} producto`;
+  async remove(id: number) {
+    try {
+      return await this.productoModel.findByIdAndDelete(id);
+    } catch (error) {
+      this.handleBDerrors(error);
+    }
+  }
+  private handleBDerrors(error: any, codeError = 500) {
+    console.log(error);
+    throw new HttpException(
+      { message: error, suggest: 'Por favor revise los logs del sistema' },
+      codeError,
+      {
+        cause: error,
+      },
+    );
   }
 }
