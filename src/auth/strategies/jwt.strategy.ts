@@ -60,7 +60,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     userBd[0].contrasena = null;
     const userReturn = {
       id: userBd[0].id,
+      nombre: userBd[0].nombre,
       usuario: userBd[0].usuario,
+      rol: userBd[0].rol,
       access_token: await this.jwtService.signAsync(payloadZ),
     };
     return userReturn;

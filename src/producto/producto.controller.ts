@@ -44,7 +44,7 @@ export class ProductoController {
 
   @Delete('/:id')
   @UseGuards(JwtAuthGuard)
-  remove(@Param('id', ParseIntPipe) id: number) {
+  remove(@Param('id') id: string) {
     return this.productoService.remove(id);
   }
 }

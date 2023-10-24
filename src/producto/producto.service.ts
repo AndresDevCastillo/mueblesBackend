@@ -45,7 +45,7 @@ export class ProductoService {
     }
   }
 
-  async remove(id: number) {
+  async remove(id: string) {
     try {
       return await this.productoModel.findByIdAndDelete(id);
     } catch (error) {
