@@ -21,9 +21,18 @@ export class UsuarioService {
       this.handleBDerrors(error);
     }
   }
-  remove(id: string) {
-    return `This action removes a #${id} usuario`;
+  getRoles() {
+    return ['Admin', 'Cobrador'];
   }
+
+  async remove(id: string) {
+    try {
+      return await this.usuarioModel.findByIdAndDelete(id);
+    } catch (error) {
+      this.handleBDerrors(error);
+    }
+  }
+
   private handleBDerrors(error: any, codeError = 500) {
     console.log(error);
     throw new HttpException(

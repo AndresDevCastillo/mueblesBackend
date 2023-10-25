@@ -12,6 +12,7 @@ import { PuebloService } from './pueblo.service';
 import { CreatePuebloDto, UpdatePuebloDto } from './dto/pueblo.dto';
 import { ValidateObjectidPipe } from 'src/common/validate-objectid/validate-objectid.pipe';
 import { JwtAuthGuard } from 'src/guard/jwt-auth.guard';
+import { colombiaJson } from './json/colombia';
 
 @Controller('pueblo')
 export class PuebloController {
@@ -25,6 +26,11 @@ export class PuebloController {
   @UseGuards(JwtAuthGuard)
   async findAll() {
     return await this.puebloService.findAll();
+  }
+  @Get('ubicacion')
+  @UseGuards(JwtAuthGuard)
+  getDepartamentosyCiudades() {
+    return colombiaJson;
   }
 
   @Get('/:id')

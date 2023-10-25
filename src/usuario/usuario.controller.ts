@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Param, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { UsuarioService } from './usuario.service';
 import { UsuarioDto } from './dto/usuario.dto';
 import { ValidateObjectidPipe } from 'src/common/validate-objectid/validate-objectid.pipe';
@@ -11,6 +19,11 @@ export class UsuarioController {
   @Post('/crear')
   async create(@Body() createUsuarioDto: UsuarioDto) {
     return await this.usuarioService.create(createUsuarioDto);
+  }
+
+  @Get('/roles')
+  getRoles() {
+    return this.usuarioService.getRoles();
   }
 
   @Delete('/:id')
