@@ -6,19 +6,19 @@ export type ProductoDocument = HydratedDocument<Producto>;
 @Schema()
 export class Producto {
   @Prop()
-  nombre: string;
+  readonly nombre: string;
 
   @Prop()
-  estado: boolean;
-
-  @Prop()   
-  valor_compra: number;
+  readonly estado: boolean;
 
   @Prop()
-  valor_contado: number;
+  readonly valor_compra: number;
 
   @Prop()
-  valor_credito: number;
+  readonly valor_contado: number;
+
+  @Prop()
+  readonly valor_credito: number;
 }
 
 export const ProductoSchema = SchemaFactory.createForClass(Producto);

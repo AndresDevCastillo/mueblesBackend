@@ -6,6 +6,7 @@ import { ProductoModule } from './producto/producto.module';
 import { UsuarioModule } from './usuario/usuario.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { PuebloModule } from './pueblo/pueblo.module';
 import configuration from './config/configuration';
 
 @Module({
@@ -21,6 +22,7 @@ import configuration from './config/configuration';
     ProductoModule,
     UsuarioModule,
     AuthModule,
+    PuebloModule,
   ],
   controllers: [AppController],
   providers: [AppService],
