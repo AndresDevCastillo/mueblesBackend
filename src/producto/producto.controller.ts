@@ -6,13 +6,13 @@ import {
   Param,
   Delete,
   UseGuards,
-  ParseIntPipe,
   Put,
 } from '@nestjs/common';
 import { ProductoService } from './producto.service';
 import { CreateProductoDto } from './dto/producto.dto';
 import { UpdateProductoDto } from './dto/producto.dto';
 import { JwtAuthGuard } from 'src/guard/jwt-auth.guard';
+import { ValidateObjectidPipe } from 'src/common/validate-objectid/validate-objectid.pipe';
 
 @Controller('producto')
 export class ProductoController {
@@ -32,7 +32,7 @@ export class ProductoController {
 
   @Get('/:id')
   @UseGuards(JwtAuthGuard)
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id', ValidateObjectidPipe) id: string) {
     return this.productoService.findOne(id);
   }
 
@@ -44,7 +44,7 @@ export class ProductoController {
 
   @Delete('/:id')
   @UseGuards(JwtAuthGuard)
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ValidateObjectidPipe) id: string) {
     return this.productoService.remove(id);
   }
 }

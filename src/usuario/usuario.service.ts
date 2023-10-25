@@ -21,16 +21,7 @@ export class UsuarioService {
       this.handleBDerrors(error);
     }
   }
-
-  findAll() {
-    return `This action returns all usuario`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} usuario`;
-  }
-
-  remove(id: number) {
+  remove(id: string) {
     return `This action removes a #${id} usuario`;
   }
   private handleBDerrors(error: any, codeError = 500) {

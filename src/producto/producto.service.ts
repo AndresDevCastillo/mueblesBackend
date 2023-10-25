@@ -26,7 +26,7 @@ export class ProductoService {
     }
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     try {
       return await this.productoModel.findById(id);
     } catch (error) {
