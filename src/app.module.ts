@@ -7,6 +7,7 @@ import { UsuarioModule } from './usuario/usuario.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PuebloModule } from './pueblo/pueblo.module';
+import { InventarioModule } from './inventario/inventario.module';
 import configuration from './config/configuration';
 
 @Module({
@@ -23,6 +24,7 @@ import configuration from './config/configuration';
     UsuarioModule,
     AuthModule,
     PuebloModule,
+    InventarioModule,
   ],
   controllers: [AppController],
   providers: [AppService],
