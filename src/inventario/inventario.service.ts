@@ -1,15 +1,18 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { CreateInventarioDto, UpdateInventarioDto } from './dto/inventario.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { Inventario } from './inventario.schema';
 import { Model } from 'mongoose';
+import { Inventario } from './schema/inventario.schema';
 
 @Injectable()
 export class InventarioService {
   constructor(@InjectModel(Inventario.name) private inventarioModel: Model<Inventario>){}
   async create(createInventarioDto: CreateInventarioDto) {
     try {
-      return await this.inventarioModel.create(createInventarioDto);
+      return await this.inventarioModel.create({
+        ...createInventarioDto,
+        existencias: createInventarioDto.cantidad
+      });
     } catch(error) {
       this.handleBDerrors(error);
     }
@@ -17,7 +20,7 @@ export class InventarioService {
 
   async findAll() {
     try {
-    return await this.inventarioModel.find();
+    return await this.inventarioModel.find().populate('producto');
     } catch(error) {
       this.handleBDerrors(error);
     }
@@ -25,7 +28,7 @@ export class InventarioService {
 
   async findOne(id: string) {
     try {
-      return await this.inventarioModel.findById(id);
+      return await this.inventarioModel.findById(id).populate('producto');
     } catch(error) {
       this.handleBDerrors(error);
     }
