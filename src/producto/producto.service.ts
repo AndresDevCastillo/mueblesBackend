@@ -52,6 +52,15 @@ export class ProductoService {
       this.handleBDerrors(error);
     }
   }
+  async productosSinInventario(idInventario: string[]){
+    try {
+      return await this.productoModel.find({
+        _id: {$nin: idInventario}
+      });
+    } catch(error) {
+      this.handleBDerrors(error);
+    }
+  }
   private handleBDerrors(error: any, codeError = 500) {
     console.log(error);
     throw new HttpException(

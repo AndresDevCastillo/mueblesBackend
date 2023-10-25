@@ -17,9 +17,13 @@ export class InventarioController {
     return await this.inventarioService.findAll();
   }
 
-  @Get('/:id')
+  @Get('obtener/:id')
   async findOne(@Param('id', ValidateObjectidPipe) id: string) {
     return await this.inventarioService.findOne(id);
+  }
+  @Get('/productos')
+  async productosSinInventario(){
+    return await this.inventarioService.productosSinInventario();
   }
 
   @Put('/actualizar')

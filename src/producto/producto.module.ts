@@ -12,5 +12,6 @@ import { Producto, ProductoSchema } from './schema/producto.schema';
   ],
   controllers: [ProductoController],
   providers: [ProductoService],
+  exports: [ProductoService, MongooseModule]
 })
 export class ProductoModule {}
