@@ -2,10 +2,25 @@ import {
   IsArray,
   IsBoolean,
   IsNumber,
+  IsObject,
   IsOptional,
   IsString,
 } from 'class-validator';
 
+export class quincenalDto {
+  @IsString()
+  dia: string;
+
+  @IsArray()
+  semanas: number[];
+}
+export class mensualDto {
+  @IsString()
+  dia: string;
+
+  @IsNumber()
+  semanas: number;
+}
 export class CreatePuebloDto {
   @IsString()
   readonly nombre: string;
@@ -24,13 +39,13 @@ export class CreatePuebloDto {
   @IsOptional()
   readonly semanal: string;
 
-  @IsArray()
+  @IsObject()
   @IsOptional()
-  readonly quincenal: number[];
+  readonly quincenal: quincenalDto;
 
-  @IsNumber()
+  @IsObject()
   @IsOptional()
-  readonly mensual: number;
+  readonly mensual: mensualDto;
 }
 
 export class UpdatePuebloDto {
@@ -54,11 +69,12 @@ export class UpdatePuebloDto {
   @IsOptional()
   readonly semanal: string;
 
-  @IsArray()
+  @IsObject()
   @IsOptional()
-  readonly quincenal: number[];
+  readonly quincenal: quincenalDto;
 
-  @IsNumber()
+  @IsObject()
   @IsOptional()
-  readonly mensual: number;
+  readonly mensual: mensualDto;
 }
+

@@ -20,11 +20,11 @@ export class Pueblo {
   @Prop({ default: null })
   semanal: string;
 
-  @Prop({ default: null })
-  quincenal: number[];
+  @Prop({type: Object, default: null })
+  quincenal: object;
 
-  @Prop({ default: null })
-  mensual: number;
+  @Prop({type: Object, default: null })
+  mensual: object;
 }
 
 export const PuebloSchema = SchemaFactory.createForClass(Pueblo);

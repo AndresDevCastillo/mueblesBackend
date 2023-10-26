@@ -27,7 +27,7 @@ export class PuebloController {
   async findAll() {
     return await this.puebloService.findAll();
   }
-  @Get('ubicacion')
+  @Get('/ubicacion')
   @UseGuards(JwtAuthGuard)
   getDepartamentosyCiudades() {
     return colombiaJson;

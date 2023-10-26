@@ -20,7 +20,7 @@ import { Usuario, UsuarioSchema } from 'src/usuario/schema/usuario.schema';
         return {
           secret: configService.get<string>('SECRET'),
           signOptions: {
-            expiresIn: '1h',
+            expiresIn: '1d',
           },
         };
       },
