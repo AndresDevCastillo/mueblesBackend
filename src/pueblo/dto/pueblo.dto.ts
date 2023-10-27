@@ -1,6 +1,8 @@
 import {
   IsArray,
   IsBoolean,
+  IsMongoId,
+  IsNotEmpty,
   IsNumber,
   IsObject,
   IsOptional,
@@ -23,13 +25,20 @@ export class mensualDto {
 }
 export class CreatePuebloDto {
   @IsString()
+  @IsNotEmpty()
   readonly nombre: string;
 
   @IsString()
+  @IsNotEmpty()
   readonly ciudad: string;
 
   @IsString()
+  @IsNotEmpty()
   readonly departamento: string;
+
+  @IsString()
+  @IsNotEmpty()
+  opcRuta: string;
 
   @IsBoolean()
   @IsOptional()
@@ -49,17 +58,25 @@ export class CreatePuebloDto {
 }
 
 export class UpdatePuebloDto {
-  @IsString()
+  @IsMongoId()
+  @IsNotEmpty()
   id: string;
 
   @IsString()
+  @IsNotEmpty()
   readonly nombre: string;
 
   @IsString()
+  @IsNotEmpty()
   readonly ciudad: string;
 
   @IsString()
+  @IsNotEmpty()
   readonly departamento: string;
+
+  @IsString()
+  @IsNotEmpty()
+  opcRuta: string;
 
   @IsBoolean()
   @IsOptional()

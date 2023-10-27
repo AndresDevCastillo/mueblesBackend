@@ -14,6 +14,9 @@ export class Pueblo {
   @Prop()
   departamento: string;
 
+  @Prop()
+  opcRuta: string;
+
   @Prop({ default: null })
   diario: boolean;
 
