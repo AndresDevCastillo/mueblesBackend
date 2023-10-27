@@ -21,6 +21,16 @@ export class UsuarioService {
       this.handleBDerrors(error);
     }
   }
+
+  async findAll() {
+    try {
+      return await this.usuarioModel
+        .find()
+        .select(['_id', 'nombre', 'usuario', 'rol']);
+    } catch (error) {
+      this.handleBDerrors(error);
+    }
+  }
   getRoles() {
     return ['Admin', 'Cobrador'];
   }

@@ -21,6 +21,10 @@ export class UsuarioController {
     return await this.usuarioService.create(createUsuarioDto);
   }
 
+@Get()
+async findAll(){
+  return await this.usuarioService.findAll();
+}
   @Get('/roles')
   getRoles() {
     return this.usuarioService.getRoles();
