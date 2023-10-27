@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class UsuarioDto {
   @IsNotEmpty()
@@ -24,4 +24,17 @@ export class UserLoginDto {
 
   @IsString()
   readonly contrasena: string;
+}
+
+export class UpdateUsuarioDto extends UsuarioDto {
+  @IsMongoId()
+  readonly id: string;
+
+  @IsString()
+  @IsOptional()
+  readonly contrasena: string;
+
+  @IsString()
+  @IsOptional()
+  readonly usuario: string;
 }

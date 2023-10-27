@@ -1,5 +1,5 @@
 import { HttpException, Injectable } from '@nestjs/common';
-import { UsuarioDto } from './dto/usuario.dto';
+import { UpdateUsuarioDto, UsuarioDto } from './dto/usuario.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Usuario } from './schema/usuario.schema';
 import * as bcrypt from 'bcrypt';
@@ -35,6 +35,25 @@ export class UsuarioService {
     return ['Admin', 'Cobrador'];
   }
 
+  async update(updateUsuarioDto: UpdateUsuarioDto) {
+    const paqueteUpdate = { ...updateUsuarioDto };
+    delete paqueteUpdate.id;
+    paqueteUpdate.usuario.length == 0 ? delete paqueteUpdate.usuario : null;
+    paqueteUpdate.contrasena.length == 0
+      ? delete paqueteUpdate.contrasena
+      : (paqueteUpdate.contrasena = await bcrypt.hashSync(
+          paqueteUpdate.contrasena,
+          10,
+        ));
+    try {
+      return await this.usuarioModel.findByIdAndUpdate(
+        updateUsuarioDto.id,
+        paqueteUpdate,
+      );
+    } catch (error) {
+      this.handleBDerrors(error);
+    }
+  }
   async remove(id: string) {
     try {
       return await this.usuarioModel.findByIdAndDelete(id);
