@@ -33,6 +33,11 @@ export class PuebloController {
     return colombiaJson;
   }
 
+  @Get('/sinCobrador/:cobrador')
+  async getRutasSinCobrador(@Param('cobrador') idCobrador: string) {
+    return await this.puebloService.getRutasSinCobrador(idCobrador);
+  }
+
   @Get('/:id')
   @UseGuards(JwtAuthGuard)
   async findOne(@Param('id', ValidateObjectidPipe) id: string) {

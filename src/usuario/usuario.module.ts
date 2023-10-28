@@ -10,5 +10,6 @@ import { Usuario, UsuarioSchema } from './schema/usuario.schema';
   ],
   controllers: [UsuarioController],
   providers: [UsuarioService],
+  exports: [MongooseModule, UsuarioService],
 })
 export class UsuarioModule {}

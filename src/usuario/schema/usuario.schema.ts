@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
+import { Pueblo } from 'src/pueblo/schema/pueblo.schema';
 
 export type UsuarioDocument = HydratedDocument<Usuario>;
 
@@ -16,6 +17,9 @@ export class Usuario {
 
   @Prop()
   rol: string;
+
+  @Prop({ type: Array, default: [], ref: 'Pueblo' })
+  rutas: Pueblo[];
 }
 
 export const UsuarioSchema = SchemaFactory.createForClass(Usuario);

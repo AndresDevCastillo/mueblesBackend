@@ -1,12 +1,16 @@
-import { HttpException, Injectable } from '@nestjs/common';
+import { HttpException, Inject, Injectable } from '@nestjs/common';
 import { CreatePuebloDto, UpdatePuebloDto } from './dto/pueblo.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Pueblo } from './schema/pueblo.schema';
 import { Model } from 'mongoose';
+import { UsuarioService } from 'src/usuario/usuario.service';
 
 @Injectable()
 export class PuebloService {
-  constructor(@InjectModel(Pueblo.name) private puebloModel: Model<Pueblo>) {}
+  constructor(
+    @InjectModel(Pueblo.name) private puebloModel: Model<Pueblo>,
+    @Inject(UsuarioService) private usuarioService: UsuarioService,
+  ) {}
   async create(pueblo: CreatePuebloDto) {
     try {
       return await this.puebloModel.create(pueblo);
@@ -28,6 +32,16 @@ export class PuebloService {
       this.handleBDerrors(error);
     }
   }
+
+  async getRutasSinCobrador(idCobrador: string) {
+    const rutasCobrador =
+      await this.usuarioService.getRutasCobrador(idCobrador);
+
+    return await this.puebloModel.find({
+      _id: { $not: { $in: rutasCobrador[0].rutas } },
+    });
+  }
+
   async remove(id: string) {
     try {
       return await this.puebloModel.findByIdAndDelete(id);

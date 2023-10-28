@@ -4,6 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Usuario } from './schema/usuario.schema';
 import * as bcrypt from 'bcrypt';
 import { Model } from 'mongoose';
+import { AgregarRutaDto } from './dto/agregarRuta.dto';
 
 @Injectable()
 export class UsuarioService {
@@ -26,13 +27,42 @@ export class UsuarioService {
     try {
       return await this.usuarioModel
         .find()
-        .select(['_id', 'nombre', 'usuario', 'rol']);
+        .select(['_id', 'nombre', 'usuario', 'rol', 'rutas']);
     } catch (error) {
       this.handleBDerrors(error);
     }
   }
+
+  async agregarRuta(agregarRutaCobrador: AgregarRutaDto) {
+    const rutasCobrador = await this.getRutasCobrador(
+      agregarRutaCobrador.cobrador,
+    );
+    const newRutas = rutasCobrador[0].rutas.concat(agregarRutaCobrador.rutas);
+    return await this.usuarioModel
+      .findByIdAndUpdate(
+        { _id: agregarRutaCobrador.cobrador },
+        { rutas: newRutas },
+      )
+      .then(() => {
+        return true;
+      })
+      .catch((error) => {
+        this.handleBDerrors(error);
+        return false;
+      });
+  }
   getRoles() {
     return ['Admin', 'Cobrador'];
+  }
+
+  async getRutasCobrador(idCobrador: string) {
+    return await this.usuarioModel.find({ _id: idCobrador }).select(['rutas']);
+  }
+
+  async getCobradores() {
+    return await this.usuarioModel
+      .find({ rol: 'Cobrador' })
+      .select(['_id', 'nombre']);
   }
 
   async update(updateUsuarioDto: UpdateUsuarioDto) {

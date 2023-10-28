@@ -12,6 +12,7 @@ import { UsuarioService } from './usuario.service';
 import { UpdateUsuarioDto, UsuarioDto } from './dto/usuario.dto';
 import { ValidateObjectidPipe } from 'src/common/validate-objectid/validate-objectid.pipe';
 import { JwtAuthGuard } from 'src/guard/jwt-auth.guard';
+import { AgregarRutaDto } from './dto/agregarRuta.dto';
 
 @Controller('usuario')
 export class UsuarioController {
@@ -22,6 +23,12 @@ export class UsuarioController {
     return await this.usuarioService.create(createUsuarioDto);
   }
 
+  @Post('/agregarRuta')
+  @UseGuards(JwtAuthGuard)
+  async agregarRuta(@Body() agregarRutaCobrador: AgregarRutaDto) {
+    return await this.usuarioService.agregarRuta(agregarRutaCobrador);
+  }
+
   @Get()
   async findAll() {
     return await this.usuarioService.findAll();
@@ -29,6 +36,12 @@ export class UsuarioController {
   @Get('/roles')
   getRoles() {
     return this.usuarioService.getRoles();
+  }
+
+  @Get('/cobrador')
+  @UseGuards(JwtAuthGuard)
+  async getCobradores() {
+    return await this.usuarioService.getCobradores();
   }
 
   @Put()
