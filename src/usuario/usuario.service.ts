@@ -34,14 +34,11 @@ export class UsuarioService {
   }
 
   async agregarRuta(agregarRutaCobrador: AgregarRutaDto) {
-    const rutasCobrador = await this.getRutasCobrador(
-      agregarRutaCobrador.cobrador,
-    );
-    const newRutas = rutasCobrador[0].rutas.concat(agregarRutaCobrador.rutas);
+  
     return await this.usuarioModel
       .findByIdAndUpdate(
         { _id: agregarRutaCobrador.cobrador },
-        { rutas: newRutas },
+        { rutas: agregarRutaCobrador.rutas },
       )
       .then(() => {
         return true;
@@ -62,7 +59,7 @@ export class UsuarioService {
   async getCobradores() {
     return await this.usuarioModel
       .find({ rol: 'Cobrador' })
-      .select(['_id', 'nombre']);
+      .select(['_id', 'nombre', 'rutas'])
   }
 
   async update(updateUsuarioDto: UpdateUsuarioDto) {
