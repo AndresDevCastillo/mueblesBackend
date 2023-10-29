@@ -38,6 +38,9 @@ export class Prestamo {
   @Prop({ default: false })
   completado: boolean;
 
+  @Prop({ default: false })
+  mora: boolean;
+
   @Prop()
   total: number;
 }

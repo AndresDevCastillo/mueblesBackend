@@ -2,6 +2,12 @@
 /dist
 /node_modules
 .env
+
+# FLY 
+.dockerignore
+Dockerfile
+fly.toml
+
 # Logs
 logs
 *.log
