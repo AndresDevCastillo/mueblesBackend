@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Delete, Param } from '@nestjs/common';
 import { PrestamoService } from './prestamo.service';
 import { CreatePrestamoDto } from './dto/prestamo.dto';
+import { ValidateObjectidPipe } from 'src/common/validate-objectid/validate-objectid.pipe';
 
 @Controller('prestamo')
 export class PrestamoController {
@@ -15,4 +16,16 @@ export class PrestamoController {
   async findAll() {
     return await this.prestamoService.findAll();
   }
+
+  @Get('/clientes')
+  async getClientesSinPrestamo() {
+    return await this.prestamoService.clientesSinPrestamos();
+  }
+
+  @Delete('/:id')
+  async delete(@Param('id', ValidateObjectidPipe) id: string) {
+    return await this.prestamoService.delete(id);
+  }
+
+  
 }

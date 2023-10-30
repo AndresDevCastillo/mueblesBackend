@@ -1,7 +1,7 @@
 import {
+  IsArray,
   IsMongoId,
   IsNotEmpty,
-  IsNotEmptyObject,
   IsNumber,
   IsString,
 } from 'class-validator';
@@ -23,7 +23,6 @@ export class CreatePrestamoDto {
   readonly ruta: string;
 
   @IsString()
-  @IsNotEmpty()
   readonly producto: string;
 
   @IsString()
@@ -34,9 +33,8 @@ export class CreatePrestamoDto {
   @IsNotEmpty()
   readonly cuotas: number;
 
-  @IsNotEmptyObject()
-  @IsNotEmpty()
-  pago_fechas: PagoFechas;
+  @IsArray()
+  pago_fechas: PagoFechas[];
 
   @IsNumber()
   @IsNotEmpty()

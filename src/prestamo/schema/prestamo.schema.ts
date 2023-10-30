@@ -27,10 +27,10 @@ export class Prestamo {
   cuotas: number;
 
   @Prop()
-  pago_fechas: PagoFechas;
+  pago_fechas: PagoFechas[];
 
   @Prop()
-  abono: Abonos;
+  abono: Abonos[];
 
   @Prop({ default: 0 })
   cuotas_atrasadas: number;

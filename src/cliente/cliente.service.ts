@@ -3,6 +3,7 @@ import { CreateClienteDto, UpdateClienteDto } from './dto/cliente.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Cliente } from './schema/cliente.schema';
 import { Model } from 'mongoose';
+import { ObjectId } from 'mongodb';
 
 @Injectable()
 export class ClienteService {
@@ -43,6 +44,15 @@ export class ClienteService {
   async remove(id: string) {
     try {
       return await this.clienteModel.findByIdAndDelete(id);
+    } catch(error) {
+      this.handleBDerrors(error);
+    }
+  }
+    async clientesSinPrestamis(idClientes: ObjectId[]){
+    try {
+      return await this.clienteModel.find({
+        _id: {$nin: idClientes}
+      }).populate('direccion');
     } catch(error) {
       this.handleBDerrors(error);
     }
