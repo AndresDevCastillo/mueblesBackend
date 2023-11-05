@@ -9,9 +9,12 @@ import { ProductoService } from 'src/producto/producto.service';
 @Module({
   imports: [
     ProductoModule,
-    MongooseModule.forFeature([{name: Inventario.name, schema: InventarioSchema}])],
+    MongooseModule.forFeature([
+      { name: Inventario.name, schema: InventarioSchema },
+    ]),
+  ],
   controllers: [InventarioController],
   providers: [InventarioService, ProductoService],
-  exports: [MongooseModule]
+  exports: [MongooseModule, InventarioService],
 })
 export class InventarioModule {}

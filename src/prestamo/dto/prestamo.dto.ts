@@ -6,11 +6,11 @@ import {
   IsString,
 } from 'class-validator';
 export class PagoFechas {
-  readonly fecha: string;
+  readonly fecha: Date;
   readonly monto: number;
 }
 export class Abonos {
-  readonly fecha: string;
+  readonly fecha: Date;
   readonly monto: number;
 }
 export class CreatePrestamoDto {
@@ -25,9 +25,12 @@ export class CreatePrestamoDto {
   @IsString()
   readonly producto: string;
 
+  @IsNumber()
+  readonly cantidad: number;
+
   @IsString()
   @IsNotEmpty()
-  readonly fecha_inicio: string;
+  readonly fecha_inicio: Date;
 
   @IsNumber()
   @IsNotEmpty()

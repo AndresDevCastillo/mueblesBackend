@@ -21,6 +21,9 @@ export class Prestamo {
   producto: string;
 
   @Prop()
+  cantidad: number;
+
+  @Prop()
   fecha_inicio: string;
 
   @Prop()

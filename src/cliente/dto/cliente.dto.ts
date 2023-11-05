@@ -1,4 +1,50 @@
-import { IsMongoId, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsDate,
+  IsMongoId,
+  IsNotEmpty,
+  IsNumber,
+  IsObject,
+  IsString,
+} from 'class-validator';
+export class PrestamoDto {
+  @IsMongoId()
+  readonly inventario: string;
+
+  @IsNotEmpty()
+  readonly producto: string;
+
+  @IsNumber()
+  readonly cantidad: number;
+
+  @IsNumber()
+  readonly cuotas: number;
+
+  @IsNumber()
+  readonly total: number;
+
+  @IsDate()
+  readonly fecha_inicio: Date;
+
+  @IsArray()
+  readonly pago_fechas: PagoFechaDto[];
+}
+
+export class PagoFechaDto {
+  @IsDate()
+  readonly fecha: Date;
+
+  @IsNumber()
+  readonly monto: number;
+}
+
+export class DireccionDto {
+  @IsMongoId()
+  readonly _id: string;
+
+  @IsNotEmpty()
+  readonly nombre: string;
+}
 
 export class CreateClienteDto {
   @IsNotEmpty()
@@ -21,9 +67,11 @@ export class CreateClienteDto {
   @IsString()
   correo: string;
 
-  @IsNotEmpty()
-  @IsMongoId()
-  direccion: string;
+  @IsObject()
+  direccion: DireccionDto;
+
+  @IsObject()
+  venta: PrestamoDto;
 }
 export class UpdateClienteDto {
   @IsNotEmpty()

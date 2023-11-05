@@ -9,7 +9,7 @@ import { ClienteService } from 'src/cliente/cliente.service';
 export class PrestamoService {
   constructor(
     @InjectModel(Prestamo.name) private prestamoModel: Model<Prestamo>,
-    @Inject(ClienteService) private clienteService : ClienteService
+    @Inject(ClienteService) private clienteService: ClienteService,
   ) {}
 
   async create(createPrestamoDto: CreatePrestamoDto) {
@@ -31,19 +31,20 @@ export class PrestamoService {
   async delete(id: string) {
     try {
       return await this.prestamoModel.findByIdAndDelete(id);
-    } catch(error) {
+    } catch (error) {
       this.handleBDerrors(error);
     }
   }
 
   async clientesSinPrestamos() {
-    const CLIENTES = await this.prestamoModel.find({completado: false}).select('cliente');
-    const idClientes: any = CLIENTES.map(cliente => {
+    const CLIENTES = await this.prestamoModel
+      .find({ completado: false })
+      .select('cliente');
+    const idClientes: any = CLIENTES.map((cliente) => {
       return cliente.cliente;
     });
     return await this.clienteService.clientesSinPrestamis(idClientes);
   }
- 
 
   private handleBDerrors(error: any, codeError = 500) {
     console.log(error);

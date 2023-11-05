@@ -11,9 +11,10 @@ import { ClienteService } from 'src/cliente/cliente.service';
     MongooseModule.forFeature([
       { name: Prestamo.name, schema: PrestamoSchema },
     ]),
-    ClienteModule
+    ClienteModule,
   ],
   controllers: [PrestamoController],
-  providers: [PrestamoService, ClienteService]
+  providers: [PrestamoService, ClienteService],
+  exports: [MongooseModule, PrestamoService],
 })
 export class PrestamoModule {}
