@@ -1,28 +1,4 @@
-import {
-  IsArray,
-  IsBoolean,
-  IsMongoId,
-  IsNotEmpty,
-  IsNumber,
-  IsObject,
-  IsOptional,
-  IsString,
-} from 'class-validator';
-
-export class quincenalDto {
-  @IsString()
-  dia: string;
-
-  @IsArray()
-  semanas: number[];
-}
-export class mensualDto {
-  @IsString()
-  dia: string;
-
-  @IsNumber()
-  semanas: number;
-}
+import { IsMongoId, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class CreateClienteDto {
   @IsNotEmpty()
@@ -48,27 +24,6 @@ export class CreateClienteDto {
   @IsNotEmpty()
   @IsMongoId()
   direccion: string;
-
-  @IsString()
-  @IsNotEmpty()
-  opcRuta: string;
-
-  @IsBoolean()
-  @IsOptional()
-  readonly diario: boolean;
-
-  @IsString()
-  @IsOptional()
-  readonly semanal: string;
-
-  @IsObject()
-  @IsOptional()
-  readonly quincenal: quincenalDto;
-
-  @IsObject()
-  @IsOptional()
-  readonly mensual: mensualDto;
-
 }
 export class UpdateClienteDto {
   @IsNotEmpty()
@@ -98,25 +53,4 @@ export class UpdateClienteDto {
   @IsNotEmpty()
   @IsMongoId()
   direccion: string;
-
-
-  @IsString()
-  @IsNotEmpty()
-  opcRuta: string;
-
-  @IsBoolean()
-  @IsOptional()
-  readonly diario: boolean;
-
-  @IsString()
-  @IsOptional()
-  readonly semanal: string;
-
-  @IsObject()
-  @IsOptional()
-  readonly quincenal: quincenalDto;
-
-  @IsObject()
-  @IsOptional()
-  readonly mensual: mensualDto;
 }

@@ -21,21 +21,6 @@ export class Cliente {
   @Prop()
   correo: string;
 
-  @Prop()
-  opcRuta: string;
-
-  @Prop({ default: null })
-  diario: boolean;
-
-  @Prop({ default: null })
-  semanal: string;
-
-  @Prop({ type: Object, default: null })
-  quincenal: object;
-
-  @Prop({ type: Object, default: null })
-  mensual: object;
-
   @Prop({ required: true, type: mongoose.Schema.Types.ObjectId, ref: 'Pueblo' })
   direccion: Pueblo;
 
