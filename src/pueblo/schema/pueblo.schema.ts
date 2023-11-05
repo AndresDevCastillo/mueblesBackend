@@ -13,21 +13,6 @@ export class Pueblo {
 
   @Prop()
   departamento: string;
-
-  @Prop()
-  opcRuta: string;
-
-  @Prop({ default: null })
-  diario: boolean;
-
-  @Prop({ default: null })
-  semanal: string;
-
-  @Prop({type: Object, default: null })
-  quincenal: object;
-
-  @Prop({type: Object, default: null })
-  mensual: object;
 }
 
 export const PuebloSchema = SchemaFactory.createForClass(Pueblo);

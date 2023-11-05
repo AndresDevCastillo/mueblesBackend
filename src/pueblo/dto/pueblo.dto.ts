@@ -9,20 +9,6 @@ import {
   IsString,
 } from 'class-validator';
 
-export class quincenalDto {
-  @IsString()
-  dia: string;
-
-  @IsArray()
-  semanas: number[];
-}
-export class mensualDto {
-  @IsString()
-  dia: string;
-
-  @IsNumber()
-  semanas: number;
-}
 export class CreatePuebloDto {
   @IsString()
   @IsNotEmpty()
@@ -36,25 +22,6 @@ export class CreatePuebloDto {
   @IsNotEmpty()
   readonly departamento: string;
 
-  @IsString()
-  @IsNotEmpty()
-  opcRuta: string;
-
-  @IsBoolean()
-  @IsOptional()
-  readonly diario: boolean;
-
-  @IsString()
-  @IsOptional()
-  readonly semanal: string;
-
-  @IsObject()
-  @IsOptional()
-  readonly quincenal: quincenalDto;
-
-  @IsObject()
-  @IsOptional()
-  readonly mensual: mensualDto;
 }
 
 export class UpdatePuebloDto {
@@ -74,24 +41,5 @@ export class UpdatePuebloDto {
   @IsNotEmpty()
   readonly departamento: string;
 
-  @IsString()
-  @IsNotEmpty()
-  opcRuta: string;
-
-  @IsBoolean()
-  @IsOptional()
-  readonly diario: boolean;
-
-  @IsString()
-  @IsOptional()
-  readonly semanal: string;
-
-  @IsObject()
-  @IsOptional()
-  readonly quincenal: quincenalDto;
-
-  @IsObject()
-  @IsOptional()
-  readonly mensual: mensualDto;
 }
 
