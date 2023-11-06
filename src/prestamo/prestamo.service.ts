@@ -71,13 +71,13 @@ export class PrestamoService {
         const hoy: Date = new Date();
         let montoMinimo: number = 0;
         prestamo.pago_fechas.forEach(pagoFecha => {
-          if(hoy>pagoFecha.fecha) {
+          if(hoy>new Date(pagoFecha.fecha)) {
             montoMinimo += pagoFecha.monto;
           }
         });
         if (abonado < montoMinimo) {
           prestamo.mora = true;
-          prestamo.cuotas_atrasadas = Math.ceil((prestamo.total-abonado)/prestamo.cuotas);
+          prestamo.cuotas_atrasadas = Math.ceil(((montoMinimo-abonado)/(prestamo.total/prestamo.cuotas)));
         }
         else {
           prestamo.mora = false;
