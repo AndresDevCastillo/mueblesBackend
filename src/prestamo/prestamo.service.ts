@@ -4,23 +4,40 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Prestamo } from './schema/prestamo.schema';
 import { Model } from 'mongoose';
 import { ClienteService } from 'src/cliente/cliente.service';
+import { Inventario } from 'src/inventario/schema/inventario.schema';
 
 @Injectable()
 export class PrestamoService {
   constructor(
     @InjectModel(Prestamo.name) private prestamoModel: Model<Prestamo>,
+    @InjectModel(Inventario.name) private inventarioModel: Model<Inventario>,
     @Inject(ClienteService) private clienteService: ClienteService,
   ) {}
 
   async create(createPrestamoDto: CreatePrestamoDto) {
     try {
-      if(createPrestamoDto.cuotas == 0) {
+      const inventario = await this.inventarioModel.findOne({
+        _id: createPrestamoDto.inventario,
+      });
+      if (inventario.existencias >= createPrestamoDto.cantidad) {
+        await this.inventarioModel.findOneAndUpdate(
+          { _id: createPrestamoDto.inventario },
+          { existencias: inventario.existencias - createPrestamoDto.cantidad },
+        );
+        const copia = { ...createPrestamoDto };
+        delete copia.inventario;
         return await this.prestamoModel.create({
-          ...createPrestamoDto,
-          completado : true,
+          ...copia,
+          completado: copia.cuotas == 0 ? true : false,
         });
       }
-      return await this.prestamoModel.create(createPrestamoDto);
+      return this.handleBDerrors(
+        `No hay suficientes ${createPrestamoDto.producto}, sólo hay ${inventario.existencias}`,
+        409,
+      );
+
+      //await this.inventarioModel.findOneAndUpdate({_id: createPrestamoDto.producto});
+      //return await this.prestamoModel.create(createPrestamoDto);
     } catch (error) {
       this.handleBDerrors(error);
     }
@@ -47,7 +64,7 @@ export class PrestamoService {
       .find({ completado: false })
       .select('cliente');
     const idClientes: any = CLIENTES.map((cliente) => {
-        return cliente.cliente;
+      return cliente.cliente;
     });
     return await this.clienteService.clientesSinPrestamis(idClientes);
   }

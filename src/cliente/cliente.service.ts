@@ -40,6 +40,7 @@ export class ClienteService {
               cuotas: createClienteDto.venta.cuotas,
               pago_fechas: createClienteDto.venta.pago_fechas,
               total: createClienteDto.venta.total,
+              completado: createClienteDto.venta.cuotas == 0 ? true : false,
             });
             await this.inventarioModel.updateOne(
               { _id: createClienteDto.venta.inventario },

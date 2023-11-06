@@ -25,6 +25,9 @@ export class CreatePrestamoDto {
   @IsString()
   readonly producto: string;
 
+  @IsMongoId()
+  readonly inventario: string;
+
   @IsNumber()
   readonly cantidad: number;
 

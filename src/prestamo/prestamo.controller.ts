@@ -26,6 +26,4 @@ export class PrestamoController {
   async delete(@Param('id', ValidateObjectidPipe) id: string) {
     return await this.prestamoService.delete(id);
   }
-
-  
 }
