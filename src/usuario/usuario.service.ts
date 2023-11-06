@@ -27,7 +27,8 @@ export class UsuarioService {
     try {
       return await this.usuarioModel
         .find()
-        .select(['_id', 'nombre', 'usuario', 'rol', 'rutas']);
+        .select(['_id', 'nombre', 'usuario', 'rol', 'rutas'])
+        .populate('rutas');
     } catch (error) {
       this.handleBDerrors(error);
     }
@@ -53,7 +54,7 @@ export class UsuarioService {
   }
 
   async getRutasCobrador(idCobrador: string) {
-    return await this.usuarioModel.find({ _id: idCobrador }).select(['rutas']);
+    return await this.usuarioModel.find({ _id: idCobrador }).select(['rutas']).populate('rutas');
   }
 
   async getCobradores() {
@@ -61,7 +62,6 @@ export class UsuarioService {
       .find({ rol: 'Cobrador' })
       .select(['_id', 'nombre', 'rutas'])
   }
-
   async update(updateUsuarioDto: UpdateUsuarioDto) {
     const paqueteUpdate = { ...updateUsuarioDto };
     delete paqueteUpdate.id;

@@ -19,6 +19,11 @@ export class InventarioController {
   async findAll() {
     return await this.inventarioService.findAll();
   }
+  @Get('/existe')
+  @UseGuards(JwtAuthGuard)
+  async findAllExiste() {
+    return await this.inventarioService.findAllExiste();
+  }
 
   @Get('obtener/:id')
   @UseGuards(JwtAuthGuard)

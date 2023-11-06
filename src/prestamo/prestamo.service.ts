@@ -14,6 +14,12 @@ export class PrestamoService {
 
   async create(createPrestamoDto: CreatePrestamoDto) {
     try {
+      if(createPrestamoDto.cuotas == 0) {
+        return await this.prestamoModel.create({
+          ...createPrestamoDto,
+          completado : true,
+        });
+      }
       return await this.prestamoModel.create(createPrestamoDto);
     } catch (error) {
       this.handleBDerrors(error);
@@ -41,7 +47,7 @@ export class PrestamoService {
       .find({ completado: false })
       .select('cliente');
     const idClientes: any = CLIENTES.map((cliente) => {
-      return cliente.cliente;
+        return cliente.cliente;
     });
     return await this.clienteService.clientesSinPrestamis(idClientes);
   }

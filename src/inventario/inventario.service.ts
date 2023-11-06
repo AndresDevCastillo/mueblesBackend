@@ -28,6 +28,13 @@ export class InventarioService {
       this.handleBDerrors(error);
     }
   }
+   async findAllExiste() {
+    try {
+    return await this.inventarioModel.find({existencias : {$gt: 0}}).populate('producto');
+    } catch(error) {
+      this.handleBDerrors(error);
+    }
+  }
 
   async findOne(id: string) {
     try {
