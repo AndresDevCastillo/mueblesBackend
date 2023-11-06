@@ -30,6 +30,9 @@ export class Prestamo {
   cuotas: number;
 
   @Prop()
+  cuota_sugerida: number;
+
+  @Prop()
   pago_fechas: PagoFechas[];
 
   @Prop()

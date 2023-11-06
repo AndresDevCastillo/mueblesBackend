@@ -2,7 +2,9 @@ import {
   IsArray,
   IsMongoId,
   IsNotEmpty,
+  IsNotEmptyObject,
   IsNumber,
+  IsObject,
   IsString,
 } from 'class-validator';
 export class PagoFechas {
@@ -45,4 +47,14 @@ export class CreatePrestamoDto {
   @IsNumber()
   @IsNotEmpty()
   total: number;
+}
+
+export class cobroDto {
+  @IsMongoId()
+  @IsNotEmpty()
+  id: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  abono: number;
 }

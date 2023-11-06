@@ -1,5 +1,10 @@
-import { HttpException, Inject, Injectable } from '@nestjs/common';
-import { CreatePrestamoDto } from './dto/prestamo.dto';
+import {
+  HttpException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { CreatePrestamoDto, cobroDto } from './dto/prestamo.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Prestamo } from './schema/prestamo.schema';
 import { Model } from 'mongoose';
@@ -29,6 +34,8 @@ export class PrestamoService {
         return await this.prestamoModel.create({
           ...copia,
           completado: copia.cuotas == 0 ? true : false,
+          cuota_sugerida:
+            copia.cuotas == 0 ? 0 : Math.floor(copia.total / copia.cuotas),
         });
       }
       return this.handleBDerrors(
@@ -43,9 +50,61 @@ export class PrestamoService {
     }
   }
 
+  async cobrar(cobro: cobroDto) {
+    let prestamo = await this.prestamoModel.findById(cobro.id);
+    if (prestamo) {
+      prestamo.abono.push({
+        fecha:new Date(),
+        monto: cobro.abono
+      });
+      let abonado: number = 0;
+      prestamo.abono.forEach(abono => {
+          abonado += abono.monto;
+      });
+      if (abonado >= prestamo.total){
+        prestamo.completado = true;
+        prestamo.mora = false;
+        prestamo.cuotas_atrasadas = 0;
+        prestamo.cuota_sugerida = 0;
+        return prestamo.save();
+      } 
+        const hoy: Date = new Date();
+        let montoMinimo: number = 0;
+        prestamo.pago_fechas.forEach(pagoFecha => {
+          if(hoy>pagoFecha.fecha) {
+            montoMinimo += pagoFecha.monto;
+          }
+        });
+        if (abonado < montoMinimo) {
+          prestamo.mora = true;
+          prestamo.cuotas_atrasadas = Math.ceil((prestamo.total-abonado)/prestamo.cuotas);
+        }
+        else {
+          prestamo.mora = false;
+          prestamo.cuotas_atrasadas = 0;
+        }
+        if(prestamo.cuotas <= prestamo.abono.length){
+          prestamo.cuota_sugerida = prestamo.total - abonado;
+        }
+        else {
+          let cuotasRestantes = prestamo.cuotas - prestamo.abono.length;
+          prestamo.cuota_sugerida = Math.ceil((prestamo.total-abonado)/cuotasRestantes);
+        }
+        return prestamo.save();
+      }
+    return new NotFoundException('EL prestamo no existe');
+  }
+
   async findAll() {
     try {
       return await this.prestamoModel.find().populate('cliente');
+    } catch (error) {
+      this.handleBDerrors(error);
+    }
+  }
+  async findCobrar() {
+     try {
+      return await this.prestamoModel.find({completado: false}).populate('cliente');
     } catch (error) {
       this.handleBDerrors(error);
     }
