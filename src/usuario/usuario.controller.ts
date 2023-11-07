@@ -19,6 +19,7 @@ export class UsuarioController {
   constructor(private readonly usuarioService: UsuarioService) {}
 
   @Post('/crear')
+  @UseGuards(JwtAuthGuard)
   async create(@Body() createUsuarioDto: UsuarioDto) {
     return await this.usuarioService.create(createUsuarioDto);
   }
@@ -30,10 +31,12 @@ export class UsuarioController {
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard)
   async findAll() {
     return await this.usuarioService.findAll();
   }
   @Get('/roles')
+  @UseGuards(JwtAuthGuard)
   getRoles() {
     return this.usuarioService.getRoles();
   }

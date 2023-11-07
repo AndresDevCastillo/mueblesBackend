@@ -34,6 +34,7 @@ export class PuebloController {
   }
 
   @Get('/sinCobrador/:cobrador')
+  @UseGuards(JwtAuthGuard)
   async getRutasSinCobrador(@Param('cobrador') idCobrador: string) {
     return await this.puebloService.getRutasSinCobrador(idCobrador);
   }
