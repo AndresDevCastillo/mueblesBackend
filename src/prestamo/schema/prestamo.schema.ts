@@ -29,7 +29,7 @@ export class Prestamo {
   @Prop()
   cuotas: number;
 
-  @Prop()
+  @Prop({default: 0})
   cuota_sugerida: number;
 
   @Prop()

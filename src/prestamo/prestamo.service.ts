@@ -31,11 +31,14 @@ export class PrestamoService {
         );
         const copia = { ...createPrestamoDto };
         delete copia.inventario;
+        let cuota_sugerida = 0;
+        if(copia.cuotas != 0) {
+          cuota_sugerida = Math.ceil(copia.total/copia.cuotas);
+        }
         return await this.prestamoModel.create({
           ...copia,
           completado: copia.cuotas == 0 ? true : false,
-          cuota_sugerida:
-            copia.cuotas == 0 ? 0 : Math.floor(copia.total / copia.cuotas),
+          cuota_sugerida: cuota_sugerida,
         });
       }
       return this.handleBDerrors(

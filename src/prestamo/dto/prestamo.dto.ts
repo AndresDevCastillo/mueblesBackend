@@ -2,9 +2,7 @@ import {
   IsArray,
   IsMongoId,
   IsNotEmpty,
-  IsNotEmptyObject,
   IsNumber,
-  IsObject,
   IsString,
 } from 'class-validator';
 export class PagoFechas {
