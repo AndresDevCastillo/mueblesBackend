@@ -4,6 +4,7 @@ import { UpdateProductoDto } from './dto/producto.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Producto } from './schema/producto.schema';
 import { Model } from 'mongoose';
+import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class ProductoService {
@@ -52,15 +53,16 @@ export class ProductoService {
       this.handleBDerrors(error);
     }
   }
-  async productosSinInventario(idInventario: string[]){
+  async productosSinInventario(idInventario: string[]) {
     try {
       return await this.productoModel.find({
-        _id: {$nin: idInventario}
+        _id: { $nin: idInventario },
       });
-    } catch(error) {
+    } catch (error) {
       this.handleBDerrors(error);
     }
   }
+
   private handleBDerrors(error: any, codeError = 500) {
     console.log(error);
     throw new HttpException(
