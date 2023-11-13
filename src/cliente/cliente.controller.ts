@@ -7,11 +7,14 @@ import {
   Delete,
   Put,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { ClienteService } from './cliente.service';
 import { CreateClienteDto, UpdateClienteDto } from './dto/cliente.dto';
 import { ValidateObjectidPipe } from 'src/common/validate-objectid/validate-objectid.pipe';
 import { JwtAuthGuard } from 'src/guard/jwt-auth.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('cliente')
 export class ClienteController {
@@ -21,6 +24,14 @@ export class ClienteController {
   @UseGuards(JwtAuthGuard)
   async create(@Body() createClienteDto: CreateClienteDto) {
     return await this.clienteService.create(createClienteDto);
+  }
+
+  @Post('/subir')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('excel'))
+  async subirClientes(@UploadedFile() excel: Express.Multer.File) {
+    console.log('EXCEL: ', excel);
+    return excel;
   }
 
   @Get()
