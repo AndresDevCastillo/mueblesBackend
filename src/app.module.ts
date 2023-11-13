@@ -11,9 +11,11 @@ import { InventarioModule } from './inventario/inventario.module';
 import { ClienteModule } from './cliente/cliente.module';
 import { PrestamoModule } from './prestamo/prestamo.module';
 import configuration from './config/configuration';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot({ load: [configuration], isGlobal: true }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],

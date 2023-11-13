@@ -22,5 +22,5 @@ export class UpdateInventarioDto {
 
     @IsNotEmpty()
     @IsNumber()
-    readonly existencia: number;
+    readonly existencias: number;
 }

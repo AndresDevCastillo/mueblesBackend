@@ -26,6 +26,9 @@ export class Cliente {
 
   @Prop({ default: false })
   mora: boolean;
+
+  @Prop()
+  creacion: string;
 }
 
 export const ClienteSchema = SchemaFactory.createForClass(Cliente);

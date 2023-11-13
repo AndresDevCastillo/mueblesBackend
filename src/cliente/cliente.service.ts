@@ -6,6 +6,7 @@ import { Model } from 'mongoose';
 import { ObjectId } from 'mongodb';
 import { Inventario } from 'src/inventario/schema/inventario.schema';
 import { Prestamo } from 'src/prestamo/schema/prestamo.schema';
+import * as moment from 'moment-timezone';
 
 @Injectable()
 export class ClienteService {
@@ -23,6 +24,7 @@ export class ClienteService {
         });
         if (inventario.length > 0) {
           if (inventario[0].existencias >= createClienteDto.venta.cantidad) {
+            const now = moment().tz('America/Bogota').format();
             const cliente = await this.clienteModel.create({
               documento: createClienteDto.documento,
               nombres: createClienteDto.nombres,
@@ -30,13 +32,14 @@ export class ClienteService {
               telefono: createClienteDto.telefono,
               correo: createClienteDto.correo,
               direccion: createClienteDto.direccion._id,
+              creacion: now,
             });
             await this.prestamoModel.create({
               cliente: cliente._id,
               ruta: createClienteDto.direccion.nombre,
               producto: createClienteDto.venta.producto,
               cantidad: createClienteDto.venta.cantidad,
-              fecha_inicio: new Date().toISOString(),
+              fecha_inicio: now,
               cuotas: createClienteDto.venta.cuotas,
               pago_fechas: createClienteDto.venta.pago_fechas,
               total: createClienteDto.venta.total,
@@ -117,6 +120,23 @@ export class ClienteService {
       .then((cliente) => {
         return cliente.length > 0;
       });
+  }
+
+  async estadisticas() {
+    try {
+      const dataSet = new Array(12).fill(0);
+      const year = new Date().getFullYear();
+      const clientes = await this.clienteModel.find({
+        creacion: { $regex: '.*' + year + '.*' },
+      });
+      clientes.forEach((cliente) => {
+        const mes = cliente.creacion.split('-');
+        dataSet[parseInt(mes[1]) - 1] += 1;
+      });
+      return dataSet;
+    } catch (error) {
+      this.handleBDerrors(error);
+    }
   }
   private handleBDerrors(error: any, codeError = 500) {
     console.log(error);
