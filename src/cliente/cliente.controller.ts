@@ -15,6 +15,7 @@ import { CreateClienteDto, UpdateClienteDto } from './dto/cliente.dto';
 import { ValidateObjectidPipe } from 'src/common/validate-objectid/validate-objectid.pipe';
 import { JwtAuthGuard } from 'src/guard/jwt-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
 
 @Controller('cliente')
 @UseGuards(JwtAuthGuard)
@@ -28,10 +29,23 @@ export class ClienteController {
 
   @Post('/subir')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FileInterceptor('excel'))
+  @UseInterceptors(
+    FileInterceptor('excel', {
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req, file, cb) => {
+          cb(
+            null,
+            `${Date.now()}-${Math.round(Math.random() * 1e9)}.${
+              file.originalname.split('.')[1]
+            }`,
+          );
+        },
+      }),
+    }),
+  )
   async subirClientes(@UploadedFile() excel: Express.Multer.File) {
-    console.log('EXCEL: ', excel);
-    return excel;
+    return await this.clienteService.subirClientes(excel);
   }
 
   @Get()

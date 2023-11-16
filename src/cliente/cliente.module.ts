@@ -9,6 +9,7 @@ import {
 } from 'src/inventario/schema/inventario.schema';
 import { PrestamoService } from 'src/prestamo/prestamo.service';
 import { Prestamo, PrestamoSchema } from 'src/prestamo/schema/prestamo.schema';
+import { Pueblo, PuebloSchema } from 'src/pueblo/schema/pueblo.schema';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { Prestamo, PrestamoSchema } from 'src/prestamo/schema/prestamo.schema';
       { name: Cliente.name, schema: ClienteSchema },
       { name: Inventario.name, schema: InventarioSchema },
       { name: Prestamo.name, schema: PrestamoSchema },
+      { name: Pueblo.name, schema: PuebloSchema },
     ]),
   ],
   controllers: [ClienteController],

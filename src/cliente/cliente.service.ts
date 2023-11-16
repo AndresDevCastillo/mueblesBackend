@@ -6,14 +6,17 @@ import { Model } from 'mongoose';
 import { ObjectId } from 'mongodb';
 import { Inventario } from 'src/inventario/schema/inventario.schema';
 import { Prestamo } from 'src/prestamo/schema/prestamo.schema';
+import { Pueblo } from 'src/pueblo/schema/pueblo.schema';
 import * as moment from 'moment-timezone';
-
+import * as excelToJson from 'convert-excel-to-json';
+import * as fs from 'fs';
 @Injectable()
 export class ClienteService {
   constructor(
     @InjectModel(Cliente.name) private clienteModel: Model<Cliente>,
     @InjectModel(Inventario.name) private inventarioModel: Model<Inventario>,
     @InjectModel(Prestamo.name) private prestamoModel: Model<Prestamo>,
+    @InjectModel(Pueblo.name) private puebloModel: Model<Pueblo>,
   ) {}
   async create(createClienteDto: CreateClienteDto) {
     try {
@@ -122,6 +125,30 @@ export class ClienteService {
       });
   }
 
+  async getDocumentos(): Promise<Cliente[]> {
+    return await this.clienteModel.find().select(['documento']);
+  }
+
+  async getPueblos(): Promise<Pueblo[]> {
+    return await this.puebloModel.find();
+  }
+
+  async getIdPuebloSinRuta() {
+    const exist = await this.puebloModel.find({ nombre: 'Sin ruta' });
+    if (exist.length == 0) {
+      return await this.puebloModel
+        .create({
+          nombre: 'Sin ruta',
+          ciudad: 'Montería',
+          departamento: 'Córdoba',
+        })
+        .then((pueblo) => {
+          return pueblo._id;
+        });
+    }
+    return exist[0]._id;
+  }
+
   async estadisticas() {
     try {
       const dataSet = new Array(12).fill(0);
@@ -138,6 +165,96 @@ export class ClienteService {
       this.handleBDerrors(error);
     }
   }
+  async deleteClientByRuta(ruta: ObjectId) {
+    const idClientes = await this.clienteModel
+      .find({ direccion: ruta })
+      .then((cliente) => {
+        return cliente.map((cliente) => cliente._id);
+      });
+    await this.clienteModel.deleteMany({ _id: { $in: idClientes } });
+  }
+  async subirClientes(excel: Express.Multer.File) {
+    const excelJson = await excelToJson({ sourceFile: excel.path });
+    const documentos = await this.getDocumentos();
+    const idPueblo = await this.getIdPuebloSinRuta();
+    const keyObj = Object.keys(excelJson);
+    const clientes: object[] = [];
+    const clientesExist: object[] = [];
+    const clientesGuardar: object[] = [];
+    keyObj.forEach(async (sheet, index) => {
+      if (index == 0) {
+        excelJson[sheet].splice(0, 2);
+      }
+      for (const cliente of excelJson[sheet]) {
+        const exist =
+          documentos.length > 0
+            ? documentos.findIndex(
+                (documento) => documento.documento == cliente['B'],
+              )
+            : -1;
+        exist == -1 ? clientes.push(cliente) : clientesExist.push(cliente);
+      }
+      for (const cliente of clientes) {
+        const nombres = cliente['C']
+          .split(' ')
+          .filter((item: string) => item.trim() !== '');
+        let nombresG = '',
+          apellidosG = '';
+        switch (nombres.length) {
+          case 7:
+            nombresG = `${nombres[0]} ${nombres[1]} ${nombres[2]} ${nombres[3]} ${nombres[4]}`;
+            apellidosG = `${nombres[5]} ${nombres[6]}`;
+            break;
+          case 6:
+            nombresG = `${nombres[0]} ${nombres[1]} ${nombres[2]} ${nombres[3]}`;
+            apellidosG = `${nombres[4]} ${nombres[5]}`;
+            break;
+          case 5:
+            nombresG = `${nombres[0]} ${nombres[1]} ${nombres[2]}`;
+            apellidosG = `${nombres[3]} ${nombres[4]}`;
+            break;
+          case 4:
+            nombresG = `${nombres[0]} ${nombres[1]}`;
+            apellidosG = `${nombres[2]} ${nombres[3]}`;
+            break;
+          case 3:
+            nombresG = `${nombres[0]}`;
+            apellidosG = `${nombres[1]} ${nombres[2]}`;
+            break;
+          case 2:
+            nombresG = `${nombres[0]}`;
+            apellidosG = `${nombres[1]}`;
+            break;
+          case 1:
+            nombresG = `${nombres[0]}`;
+            break;
+        }
+        //Que la cédula del excel no este en las cédulas a guardar en la base de datos
+        const existG = clientesGuardar.findIndex(
+          (cl: any) => parseInt(cliente['B']) == cl.documento,
+        );
+
+        if (existG == -1) {
+          clientesGuardar.push({
+            documento: parseInt(cliente['B']),
+            nombres: nombresG,
+            apellidos: apellidosG,
+            telefono: cliente['D'],
+            correo: 'No aplica',
+            direccion: idPueblo,
+            mora: false,
+            creacion: new Date().toISOString().toString(),
+          });
+        }
+      }
+    });
+    if (clientesGuardar.length == 0) {
+      fs.unlinkSync(excel.path);
+      return { message: 'Sin clientes para crear' };
+    }
+    return await this.clienteModel.create(clientesGuardar);
+  }
+
   private handleBDerrors(error: any, codeError = 500) {
     console.log(error);
     throw new HttpException(
