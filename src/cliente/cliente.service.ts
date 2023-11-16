@@ -43,6 +43,10 @@ export class ClienteService {
               cuotas: createClienteDto.venta.cuotas,
               pago_fechas: createClienteDto.venta.pago_fechas,
               total: createClienteDto.venta.total,
+               cuota_sugerida:
+            createClienteDto.venta.cuotas == 0
+              ? 0
+              : Math.ceil(createClienteDto.venta.total / createClienteDto.venta.cuotas),
               completado: createClienteDto.venta.cuotas == 0 ? true : false,
             });
             await this.inventarioModel.updateOne(

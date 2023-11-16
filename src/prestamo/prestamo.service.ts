@@ -205,7 +205,7 @@ export class PrestamoService {
       abono: 0
     }
     let hoy = {
-      fecha: semana[DateTime.now().setZone('America/Bogota').weekday - 1],
+      fecha: semana[DateTime.now().setZone('America/Bogota').weekday ],
       total: 0,
       ventas: 0,
       abono: 0
