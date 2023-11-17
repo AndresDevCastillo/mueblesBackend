@@ -12,6 +12,15 @@ import * as excelToJson from 'convert-excel-to-json';
 import * as fs from 'fs';
 @Injectable()
 export class ClienteService {
+  private diasSemana = [
+    'Domingo',
+    'Lunes',
+    'Martes',
+    'Miércoles',
+    'Jueves',
+    'Viernes',
+    'Sábado',
+  ];
   constructor(
     @InjectModel(Cliente.name) private clienteModel: Model<Cliente>,
     @InjectModel(Inventario.name) private inventarioModel: Model<Inventario>,
@@ -133,20 +142,16 @@ export class ClienteService {
     return await this.puebloModel.find();
   }
 
-  async getIdPuebloSinRuta() {
+  async getPuebloSinRuta() {
     const exist = await this.puebloModel.find({ nombre: 'Sin ruta' });
     if (exist.length == 0) {
-      return await this.puebloModel
-        .create({
-          nombre: 'Sin ruta',
-          ciudad: 'Montería',
-          departamento: 'Córdoba',
-        })
-        .then((pueblo) => {
-          return pueblo._id;
-        });
+      return await this.puebloModel.create({
+        nombre: 'Sin ruta',
+        ciudad: 'Montería',
+        departamento: 'Córdoba',
+      });
     }
-    return exist[0]._id;
+    return exist[0];
   }
 
   async estadisticas() {
@@ -174,13 +179,19 @@ export class ClienteService {
     await this.clienteModel.deleteMany({ _id: { $in: idClientes } });
   }
   async subirClientes(excel: Express.Multer.File) {
+    const now = moment().tz('America/Bogota').format();
+
     const excelJson = await excelToJson({ sourceFile: excel.path });
+    const puebloSinRuta = await this.getPuebloSinRuta();
+    //await this.prestamoModel.deleteMany({ ruta: { $in: ['Sin ruta'] } });
+    //await this.deleteClientByRuta(puebloSinRuta._id);
     const documentos = await this.getDocumentos();
-    const idPueblo = await this.getIdPuebloSinRuta();
     const keyObj = Object.keys(excelJson);
     const clientes: object[] = [];
     const clientesExist: object[] = [];
     const clientesGuardar: object[] = [];
+    let prestamosGuardar: object[] = [];
+
     keyObj.forEach(async (sheet, index) => {
       if (index == 0) {
         excelJson[sheet].splice(0, 2);
@@ -241,20 +252,205 @@ export class ClienteService {
             apellidos: apellidosG,
             telefono: cliente['D'],
             correo: 'No aplica',
-            direccion: idPueblo,
+            direccion: puebloSinRuta._id,
             mora: false,
-            creacion: new Date().toISOString().toString(),
+            creacion: now,
+          });
+          let fechaPagos = await this.calcularFechasPago(
+            cliente['A'],
+            cliente['O'],
+            cliente['J'],
+          );
+          const fArray: string[] = cliente['A'].split('-');
+          const fechaInicio = new Date(
+            `${fArray[0]}-${parseInt(fArray[1])}-${parseInt(fArray[2])}`,
+          );
+          fechaPagos = fechaPagos.map((fecha) => {
+            return {
+              fecha: new Date(fecha.fecha),
+              monto: parseFloat(cliente['I']),
+            };
+          });
+
+          let total = cliente['G'];
+          if (typeof total == 'string') {
+            total = total.replace(/[,.]/g, '');
+          }
+          prestamosGuardar.push({
+            ruta: puebloSinRuta.nombre,
+            producto: cliente['Q'],
+            cantidad: 1,
+            fecha_inicio: fechaInicio.toISOString().toString(),
+            cuotas: parseInt(cliente['J']),
+            pago_fechas: fechaPagos,
+            abono: new Array(parseInt(cliente['K']))
+              .fill(0)
+              .map((ab, index) => {
+                return {
+                  fecha: fechaPagos[index].fecha,
+                  monto: parseFloat(cliente['I']),
+                };
+              }),
+            cuotas_atrasadas: 0,
+            completado: parseInt(cliente['J']) == parseInt(cliente['K']),
+            mora: false,
+            total: parseInt(total, 10),
           });
         }
       }
     });
     if (clientesGuardar.length == 0) {
-      fs.unlinkSync(excel.path);
-      return { message: 'Sin clientes para crear' };
+      return { status: false, message: 'Sin clientes para crear' };
     }
-    return await this.clienteModel.create(clientesGuardar);
+    const clientesG = await this.clienteModel.insertMany(clientesGuardar);
+    prestamosGuardar = prestamosGuardar.map((prestamo: any, index) => {
+      prestamo.cliente = clientesG[index]._id;
+      return prestamo;
+    });
+    await this.prestamoModel.insertMany(prestamosGuardar);
+    fs.unlinkSync(excel.path);
+    //this.prestamoService.actualizarCobros();
+    return {
+      status: true,
+      message: `Se agregaron ${clientesG.length} clientes, clientes omitidos ${clientesExist.length}`,
+    };
   }
+  private async calcularFechasPago(
+    fechaInicio: string,
+    frecuenciaCobro = 'diario',
+    cuotas = 1,
+  ) {
+    const fArray: string[] = fechaInicio.split('-');
+    const detalleFrecuencia = frecuenciaCobro.split(' (');
+    const fechaActual = new Date(
+      `${fArray[0]}-${parseInt(fArray[1])}-${parseInt(fArray[2])}`,
+    );
+    const diaActual = fechaActual.getDay();
 
+    const fechaPagos = [];
+    let diaFrecuencia = 0;
+    const milisDia = 24 * 60 * 60 * 1000;
+    let aumentoDias = 1,
+      diaSemana: any;
+    let sinComplex = true;
+
+    switch (detalleFrecuencia[0].toLowerCase()) {
+      case 'diario':
+        sinComplex = true;
+        aumentoDias = 1;
+        break;
+      case 'semanal':
+        diaSemana = detalleFrecuencia[1].slice(
+          0,
+          detalleFrecuencia[1].length - 1,
+        );
+        sinComplex = true;
+        diaFrecuencia = this.diasSemana.findIndex(
+          (dia) => dia.toLowerCase() == diaSemana.toLowerCase(),
+        );
+        if (diaActual > diaFrecuencia) {
+          aumentoDias = 7 - (diaActual - diaFrecuencia);
+        } else if (diaActual < diaFrecuencia) {
+          aumentoDias = diaFrecuencia - diaActual;
+        } else {
+          aumentoDias = 7;
+        }
+        break;
+      case 'quincenal':
+        diaSemana = detalleFrecuencia[1].split(' ');
+        diaSemana = diaSemana[1].split('/');
+        diaSemana[0] = parseInt(diaSemana[0]);
+        diaSemana[1] = parseInt(diaSemana[1]);
+        if (
+          fechaActual.getDate() < diaSemana[0] &&
+          fechaActual.getDate() < diaSemana[1]
+        ) {
+          fechaActual.setDate(diaSemana[0]);
+          fechaPagos.push({
+            fecha: `${fechaActual.getFullYear()}-${
+              (fechaActual.getMonth() + 1 < 10 ? '0' : '') +
+              (fechaActual.getMonth() + 1)
+            }-${(diaSemana[0] < 10 ? '0' : '') + diaSemana[0]}`,
+          });
+        } else if (
+          fechaActual.getDate() >= diaSemana[0] &&
+          fechaActual.getDate() < diaSemana[1]
+        ) {
+          fechaActual.setDate(diaSemana[1]);
+          fechaPagos.push({
+            fecha: `${fechaActual.getFullYear()}-${
+              (fechaActual.getMonth() + 1 < 10 ? '0' : null) +
+              (fechaActual.getMonth() + 1)
+            }-${(diaSemana[1] < 10 ? '0' : '') + diaSemana[1]}`,
+          });
+        }
+        fechaActual.setMonth(fechaActual.getMonth() + 1);
+
+        sinComplex = false;
+        while (fechaPagos.length < cuotas) {
+          const indexDia = diaSemana.findIndex(
+            (dia) => dia != fechaActual.getDate(),
+          );
+          fechaPagos.push({
+            fecha: `${fechaActual.getFullYear()}-${
+              (fechaActual.getMonth() + 1 < 10 ? '0' : null) +
+              (fechaActual.getMonth() + 1)
+            }-${(diaSemana[indexDia] < 10 ? '0' : '') + diaSemana[indexDia]}`,
+          });
+          fechaActual.setDate(diaSemana[indexDia]);
+          if (indexDia == 1) {
+            fechaActual.setMonth(fechaActual.getMonth() + 1);
+          }
+        }
+        break;
+      case 'mensual':
+        sinComplex = false;
+        diaSemana = detalleFrecuencia[1].split(' ');
+        diaSemana[1] = parseInt(diaSemana[1]);
+        if (fechaActual.getDate() >= diaSemana[1]) {
+          fechaActual.setDate(diaSemana[1]);
+          fechaActual.setMonth(fechaActual.getMonth() + 1);
+        } else {
+          fechaActual.setDate(diaSemana[1]);
+        }
+        while (fechaPagos.length < cuotas) {
+          fechaPagos.push({
+            fecha: `${fechaActual.getFullYear()}-${
+              (fechaActual.getMonth() + 1 < 10 ? '0' : '') +
+              (fechaActual.getMonth() + 1)
+            }-${(diaSemana[1] < 10 ? '0' : '') + diaSemana[1]}`,
+          });
+          fechaActual.setMonth(fechaActual.getMonth() + 1);
+        }
+        break;
+    }
+    if (sinComplex) {
+      while (fechaPagos.length < cuotas) {
+        fechaActual.setTime(fechaActual.getTime() + aumentoDias * milisDia);
+        //No es domingo
+        if (fechaActual.getDay() != 0) {
+          fechaPagos.push({
+            fecha: `${fechaActual.getFullYear()}-${
+              (fechaActual.getMonth() + 1 < 10 ? '0' : '') +
+              (fechaActual.getMonth() + 1)
+            }-${
+              (fechaActual.getDate() < 10 ? '0' : '') + fechaActual.getDate()
+            }`,
+          });
+          switch (detalleFrecuencia[0].toLowerCase()) {
+            case 'diario':
+              aumentoDias = 1;
+              break;
+
+            case 'semanal':
+              aumentoDias = 7;
+              break;
+          }
+        }
+      }
+    }
+    return fechaPagos;
+  }
   private handleBDerrors(error: any, codeError = 500) {
     console.log(error);
     throw new HttpException(
