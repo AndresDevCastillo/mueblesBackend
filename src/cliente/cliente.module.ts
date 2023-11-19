@@ -10,6 +10,7 @@ import {
 import { PrestamoService } from 'src/prestamo/prestamo.service';
 import { Prestamo, PrestamoSchema } from 'src/prestamo/schema/prestamo.schema';
 import { Pueblo, PuebloSchema } from 'src/pueblo/schema/pueblo.schema';
+import { PrestamoModule } from 'src/prestamo/prestamo.module';
 
 @Module({
   imports: [
