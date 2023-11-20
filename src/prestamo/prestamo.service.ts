@@ -11,7 +11,6 @@ import { Model } from 'mongoose';
 import { ClienteService } from 'src/cliente/cliente.service';
 import { Inventario } from 'src/inventario/schema/inventario.schema';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { CronService } from 'src/cron/cron.service';
 import { CronMongo } from 'src/cron/schema/cron.schema';
 const { DateTime } = require('luxon');
 
@@ -104,7 +103,7 @@ export class PrestamoService {
     return new NotFoundException('EL prestamo no existe');
   }
 
-  @Cron(CronExpression.EVERY_HOUR)
+  @Cron(CronExpression.EVERY_12_HOURS)
   async actualizarCobros() {
     try {
       let prestamosVigentes = await this.prestamoModel.find({

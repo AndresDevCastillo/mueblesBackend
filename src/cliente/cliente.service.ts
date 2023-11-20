@@ -261,7 +261,7 @@ export class ClienteService {
             correo: 'No aplica',
             direccion: puebloSinRuta._id,
             mora: false,
-            creacion: now,
+            creacion: new Date(cliente['A']).toISOString().toString(),
           });
           let fechaPagos = await this.calcularFechasPago(
             cliente['A'],
