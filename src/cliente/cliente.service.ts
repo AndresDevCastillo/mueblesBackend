@@ -55,10 +55,13 @@ export class ClienteService {
               cuotas: createClienteDto.venta.cuotas,
               pago_fechas: createClienteDto.venta.pago_fechas,
               total: createClienteDto.venta.total,
-               cuota_sugerida:
-            createClienteDto.venta.cuotas == 0
-              ? 0
-              : Math.ceil(createClienteDto.venta.total / createClienteDto.venta.cuotas),
+              cuota_sugerida:
+                createClienteDto.venta.cuotas == 0
+                  ? 0
+                  : Math.ceil(
+                      createClienteDto.venta.total /
+                        createClienteDto.venta.cuotas,
+                    ),
               completado: createClienteDto.venta.cuotas == 0 ? true : false,
             });
             await this.inventarioModel.updateOne(
@@ -272,7 +275,7 @@ export class ClienteService {
           fechaPagos = fechaPagos.map((fecha) => {
             return {
               fecha: new Date(fecha.fecha),
-              monto: parseFloat(cliente['I']),
+              monto: parseFloat(cliente['I'].replace(',', '.')),
             };
           });
 
@@ -280,6 +283,14 @@ export class ClienteService {
           if (typeof total == 'string') {
             total = total.replace(/[,.]/g, '');
           }
+          let totalCliente = parseInt(cliente['F'].replace(/\./g, ''));
+          let saldoCliente = parseFloat(
+            cliente['M'].replace(/\./g, '').replace(',', '.'),
+          );
+          let cuotaRedondeada = Math.ceil(parseFloat(cliente['K']));
+          let abonoPago = Math.ceil(
+            (totalCliente - saldoCliente) / cuotaRedondeada,
+          );
           prestamosGuardar.push({
             ruta: puebloSinRuta.nombre,
             producto: cliente['Q'],
@@ -287,14 +298,12 @@ export class ClienteService {
             fecha_inicio: fechaInicio.toISOString().toString(),
             cuotas: parseInt(cliente['J']),
             pago_fechas: fechaPagos,
-            abono: new Array(parseInt(cliente['K']))
-              .fill(0)
-              .map((ab, index) => {
-                return {
-                  fecha: fechaPagos[index].fecha,
-                  monto: parseFloat(cliente['I']),
-                };
-              }),
+            abono: new Array(cuotaRedondeada).fill(0).map((ab, index) => {
+              return {
+                fecha: fechaPagos[index].fecha,
+                monto: abonoPago,
+              };
+            }),
             cuotas_atrasadas: 0,
             completado: parseInt(cliente['J']) == parseInt(cliente['K']),
             mora: false,
@@ -319,6 +328,7 @@ export class ClienteService {
       message: `Se agregaron ${clientesG.length} clientes, clientes omitidos ${clientesExist.length}`,
     };
   }
+
   private async calcularFechasPago(
     fechaInicio: string,
     frecuenciaCobro = 'diario',

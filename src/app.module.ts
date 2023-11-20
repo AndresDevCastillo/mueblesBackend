@@ -12,6 +12,7 @@ import { ClienteModule } from './cliente/cliente.module';
 import { PrestamoModule } from './prestamo/prestamo.module';
 import configuration from './config/configuration';
 import { ScheduleModule } from '@nestjs/schedule';
+import { CronModule } from './cron/cron.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     InventarioModule,
     ClienteModule,
     PrestamoModule,
+    CronModule,
   ],
   controllers: [AppController],
   providers: [AppService],

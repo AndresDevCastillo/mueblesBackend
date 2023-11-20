@@ -10,16 +10,17 @@ import { Prestamo } from './schema/prestamo.schema';
 import { Model } from 'mongoose';
 import { ClienteService } from 'src/cliente/cliente.service';
 import { Inventario } from 'src/inventario/schema/inventario.schema';
-import { Cron } from '@nestjs/schedule';
-const { DateTime } = require('luxon'); 
-
-
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { CronService } from 'src/cron/cron.service';
+import { CronMongo } from 'src/cron/schema/cron.schema';
+const { DateTime } = require('luxon');
 
 @Injectable()
 export class PrestamoService {
   constructor(
     @InjectModel(Prestamo.name) private prestamoModel: Model<Prestamo>,
     @InjectModel(Inventario.name) private inventarioModel: Model<Inventario>,
+    @InjectModel(CronMongo.name) private cronModel: Model<CronMongo>,
     @Inject(ClienteService) private clienteService: ClienteService,
   ) {}
 
@@ -103,7 +104,7 @@ export class PrestamoService {
     return new NotFoundException('EL prestamo no existe');
   }
 
-  @Cron('0 1 * * *')
+  @Cron(CronExpression.EVERY_HOUR)
   async actualizarCobros() {
     try {
       let prestamosVigentes = await this.prestamoModel.find({
@@ -148,7 +149,11 @@ export class PrestamoService {
       const prestamosActualizadosResolved = await Promise.all(
         prestamosActualizados,
       );
-      return prestamosActualizadosResolved;
+      await this.cronModel.create({
+        nombre: 'Actualizo las ventas activas',
+        fecha: new Date().toLocaleString('es-ES'),
+      });
+      return `Se actualizaron ${prestamosActualizadosResolved.length} ventas`;
     } catch (error) {
       this.handleBDerrors(error);
     }
@@ -191,66 +196,75 @@ export class PrestamoService {
     let ventaDataSet = new Array(12).fill(0);
     let abonoDataSet = new Array(12).fill(0);
     const year = new Date().getFullYear();
-    let semana = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+    let semana = [
+      'Domingo',
+      'Lunes',
+      'Martes',
+      'Miércoles',
+      'Jueves',
+      'Viernes',
+      'Sábado',
+    ];
     let yearC = {
       fecha: year,
       total: 0,
       ventas: 0,
-      abono: 0
-    }
+      abono: 0,
+    };
     let mes = {
       fecha: new Date().getMonth(),
       total: 0,
       ventas: 0,
-      abono: 0
-    }
+      abono: 0,
+    };
     let hoy = {
-      fecha: semana[DateTime.now().setZone('America/Bogota').weekday ],
+      fecha: semana[DateTime.now().setZone('America/Bogota').weekday],
       total: 0,
       ventas: 0,
-      abono: 0
-    }
+      abono: 0,
+    };
     const prestamos = await this.prestamoModel.find({
-    fecha_inicio: { $regex: '.*' + year + '.*' },
+      fecha_inicio: { $regex: '.*' + year + '.*' },
     });
     // Recorro prestamos
     prestamos.forEach((prestamo) => {
-        yearC.ventas += 1;
-        yearC.total += prestamo.total;
-        const mesArray = prestamo.fecha_inicio.split('-');
+      yearC.ventas += 1;
+      yearC.total += prestamo.total;
+      const mesArray = prestamo.fecha_inicio.split('-');
 
-        // valido las fechas de la venta
-        if(parseInt(mesArray[1]) == (new Date().getMonth() + 1)) {
-          mes.ventas += 1;
-          mes.total += prestamo.total;
-          if(this.sonFechasIguales(new Date(), new Date(prestamo.fecha_inicio))) {
-            hoy.ventas += 1;
-            hoy.total += prestamo.total;
+      // valido las fechas de la venta
+      if (parseInt(mesArray[1]) == new Date().getMonth() + 1) {
+        mes.ventas += 1;
+        mes.total += prestamo.total;
+        if (
+          this.sonFechasIguales(new Date(), new Date(prestamo.fecha_inicio))
+        ) {
+          hoy.ventas += 1;
+          hoy.total += prestamo.total;
+        }
+      }
+      // Valido las fechas de los abonos
+      ventaDataSet[parseInt(mesArray[1]) - 1] += prestamo.total;
+      prestamo.abono.forEach((abono) => {
+        if (new Date().getMonth() == new Date(abono.fecha).getMonth()) {
+          mes.abono += abono.monto;
+          if (this.sonFechasIguales(new Date(), new Date(abono.fecha))) {
+            hoy.abono += abono.monto;
           }
         }
-        // Valido las fechas de los abonos
-        ventaDataSet[parseInt(mesArray[1]) - 1] += prestamo.total;
-        prestamo.abono.forEach(abono => {
-          if(new Date().getMonth() == (new Date(abono.fecha).getMonth())) {
-            mes.abono += abono.monto;
-            if(this.sonFechasIguales(new Date(), new Date(abono.fecha))){
-              hoy.abono += abono.monto;
-            }
-          }
-          
-          yearC.abono += abono.monto;
-          const mesAbono = abono.fecha.toISOString().split('-');
-          abonoDataSet[parseInt(mesAbono[1]) - 1] += abono.monto;
-        })
+
+        yearC.abono += abono.monto;
+        const mesAbono = abono.fecha.toISOString().split('-');
+        abonoDataSet[parseInt(mesAbono[1]) - 1] += abono.monto;
       });
+    });
 
     return {
       ventas: ventaDataSet,
       abonos: abonoDataSet,
-      year : yearC,
+      year: yearC,
       mes: mes,
-      hoy : hoy ,
-
+      hoy: hoy,
     };
   }
 
@@ -265,10 +279,10 @@ export class PrestamoService {
     );
   }
   private sonFechasIguales(fecha1: Date, fecha2: Date) {
-  return (
-    fecha1.getFullYear() === fecha2.getFullYear() &&
-    fecha1.getMonth() === fecha2.getMonth() &&
-    fecha1.getDate() === fecha2.getDate()
-  );
-}
+    return (
+      fecha1.getFullYear() === fecha2.getFullYear() &&
+      fecha1.getMonth() === fecha2.getMonth() &&
+      fecha1.getDate() === fecha2.getDate()
+    );
+  }
 }

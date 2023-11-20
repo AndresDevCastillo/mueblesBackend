@@ -10,7 +10,7 @@ import {
 import { PrestamoService } from 'src/prestamo/prestamo.service';
 import { Prestamo, PrestamoSchema } from 'src/prestamo/schema/prestamo.schema';
 import { Pueblo, PuebloSchema } from 'src/pueblo/schema/pueblo.schema';
-import { PrestamoModule } from 'src/prestamo/prestamo.module';
+import { CronMongo, CronSchema } from 'src/cron/schema/cron.schema';
 
 @Module({
   imports: [
@@ -19,6 +19,7 @@ import { PrestamoModule } from 'src/prestamo/prestamo.module';
       { name: Inventario.name, schema: InventarioSchema },
       { name: Prestamo.name, schema: PrestamoSchema },
       { name: Pueblo.name, schema: PuebloSchema },
+      { name: CronMongo.name, schema: CronSchema },
     ]),
   ],
   controllers: [ClienteController],
