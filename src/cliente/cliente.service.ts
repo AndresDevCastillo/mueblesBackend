@@ -11,6 +11,7 @@ import * as moment from 'moment-timezone';
 import * as excelToJson from 'convert-excel-to-json';
 import * as fs from 'fs';
 import Decimal from 'decimal.js';
+import { Console } from 'console';
 @Injectable()
 export class ClienteService {
   private diasSemana = [
@@ -106,6 +107,13 @@ export class ClienteService {
 
   async update(updateClienteDto: UpdateClienteDto) {
     try {
+      const ruta = await this.puebloModel.findById(updateClienteDto.direccion);
+      console.log(ruta);
+      let resp = await this.prestamoModel.updateMany(
+        { cliente: updateClienteDto.id },
+        { $set: { ruta: ruta.nombre } },
+      );
+      console.log(resp);
       return await this.clienteModel.findByIdAndUpdate(
         updateClienteDto.id,
         updateClienteDto,
