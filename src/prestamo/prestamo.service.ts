@@ -103,7 +103,7 @@ export class PrestamoService {
     return new NotFoundException('EL prestamo no existe');
   }
 
-  @Cron(CronExpression.EVERY_12_HOURS)
+  @Cron(CronExpression.EVERY_DAY_AT_1AM)
   async actualizarCobros() {
     try {
       let prestamosVigentes = await this.prestamoModel.find({

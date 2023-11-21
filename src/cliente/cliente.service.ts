@@ -10,6 +10,7 @@ import { Pueblo } from 'src/pueblo/schema/pueblo.schema';
 import * as moment from 'moment-timezone';
 import * as excelToJson from 'convert-excel-to-json';
 import * as fs from 'fs';
+import Decimal from 'decimal.js';
 @Injectable()
 export class ClienteService {
   private diasSemana = [
@@ -287,10 +288,9 @@ export class ClienteService {
           let saldoCliente = parseFloat(
             cliente['M'].replace(/\./g, '').replace(',', '.'),
           );
+          let totalPagado = totalCliente - saldoCliente;
           let cuotaRedondeada = Math.ceil(parseFloat(cliente['K']));
-          let abonoPago = Math.ceil(
-            (totalCliente - saldoCliente) / cuotaRedondeada,
-          );
+          let abonos = this.calcularCuotas(totalPagado, cuotaRedondeada);
           prestamosGuardar.push({
             ruta: puebloSinRuta.nombre,
             producto: cliente['Q'],
@@ -298,10 +298,10 @@ export class ClienteService {
             fecha_inicio: fechaInicio.toISOString().toString(),
             cuotas: parseInt(cliente['J']),
             pago_fechas: fechaPagos,
-            abono: new Array(cuotaRedondeada).fill(0).map((ab, index) => {
+            abono: new Array(abonos.length).fill(0).map((ab, index) => {
               return {
                 fecha: fechaPagos[index].fecha,
-                monto: abonoPago,
+                monto: abonos[index],
               };
             }),
             cuotas_atrasadas: 0,
@@ -464,6 +464,23 @@ export class ClienteService {
       }
     }
     return fechaPagos;
+  }
+  private calcularCuotas(total: number, numeroCuotas: number) {
+    if (numeroCuotas == 0) {
+      return [];
+    }
+    if (numeroCuotas == 1) {
+      return [total];
+    }
+    const cuotaBase = Math.floor(total / numeroCuotas / 1000) * 1000;
+
+    const diferenciaTotal = total - cuotaBase * numeroCuotas;
+
+    const cuotas = Array.from({ length: numeroCuotas }, (_, index) => {
+      const ajuste = index < Math.ceil(diferenciaTotal / 1000) ? 1000 : 0;
+      return cuotaBase + ajuste;
+    });
+    return cuotas;
   }
   private handleBDerrors(error: any, codeError = 500) {
     console.log(error);
