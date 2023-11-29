@@ -166,9 +166,29 @@ export class PrestamoService {
   }
   async findCobrar() {
     try {
-      return await this.prestamoModel
-        .find({ completado: false })
+      const hoy = new Date();
+      const hoyFormateada = new Date(
+        Date.UTC(
+          hoy.getFullYear(),
+          hoy.getMonth(),
+          hoy.getDate(),
+          0, // Hora en UTC
+          0, // Minutos en UTC
+          0, // Segundos en UTC
+          0, // Milisegundos en UTC
+        ),
+      ).toISOString();
+      const cobros = await this.prestamoModel
+        .find({
+          completado: false,
+        })
         .populate('cliente');
+      const cobrosHoy = cobros.filter((cobro) => {
+        return cobro.pago_fechas.some((fechas_pago) => {
+          return fechas_pago.fecha.toISOString() === hoyFormateada;
+        });
+      });
+      return cobrosHoy;
     } catch (error) {
       this.handleBDerrors(error);
     }
