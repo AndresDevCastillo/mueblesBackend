@@ -211,7 +211,7 @@ export class PrestamoService {
         .populate('cliente');
       const cobrosHoy = cobros.filter((cobro) => {
         return cobro.pago_fechas.some((fechas_pago) => {
-          return fechas_pago.fecha.toISOString() === hoyFormateada;
+          return new Date(fechas_pago.fecha).toISOString() === hoyFormateada;
         });
       });
       return cobrosHoy;
