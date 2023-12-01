@@ -24,6 +24,9 @@ export class Cliente {
   @Prop({ required: true, type: mongoose.Schema.Types.ObjectId, ref: 'Pueblo' })
   direccion: Pueblo;
 
+  @Prop()
+  direccionResidencia: string;
+  
   @Prop({ default: false })
   mora: boolean;
 

@@ -12,6 +12,7 @@ import { PrestamoService } from './prestamo.service';
 import { CreatePrestamoDto, cobroDto } from './dto/prestamo.dto';
 import { ValidateObjectidPipe } from 'src/common/validate-objectid/validate-objectid.pipe';
 import { JwtAuthGuard } from 'src/guard/jwt-auth.guard';
+import { AbonosDto } from './dto/abonos.dto';
 
 @Controller('prestamo')
 @UseGuards(JwtAuthGuard)
@@ -26,6 +27,11 @@ export class PrestamoController {
   @Post('/cobrar')
   async cobrar(@Body() cobro: cobroDto) {
     return await this.prestamoService.cobrar(cobro);
+  }
+  
+  @Post('/abonar')
+  async abonar(@Body() abonos: AbonosDto){
+    return await this.prestamoService.abonar(abonos);
   }
 
   @Get()

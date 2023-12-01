@@ -12,6 +12,7 @@ import { ClienteService } from 'src/cliente/cliente.service';
 import { Inventario } from 'src/inventario/schema/inventario.schema';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { CronMongo } from 'src/cron/schema/cron.schema';
+import { AbonosDto } from './dto/abonos.dto';
 const { DateTime } = require('luxon');
 
 @Injectable()
@@ -57,9 +58,34 @@ export class PrestamoService {
       this.handleBDerrors(error);
     }
   }
-
+  async abonar(abonos: AbonosDto) {
+    const cliente = await this.clienteService.crearClienteAntiguo({
+      documento: abonos.documento,
+      nombres: abonos.nombres,
+      apellidos: abonos.apellidos,
+      telefono: abonos.telefono,
+      correo: abonos.correo,
+      direccion: abonos.ruta,
+      direccionResidencia: abonos.direccionResidencia,
+    });
+    if (cliente) {
+      return await this.prestamoModel.create({
+        cliente: cliente._id,
+        ruta: abonos.rutaPlana,
+        producto: abonos.producto,
+        cantidad: 1,
+        fecha_inicio: abonos.fechaVenta,
+        cuotas: abonos.pago_fechas.length,
+        pago_fechas: abonos.pago_fechas,
+        abono: abonos.abonos,
+        total: abonos.total,
+        completado: abonos.pago_fechas.length == 0,
+      });
+    }
+    return this.handleBDerrors('Ya existe un cliente con ese documento', 409);
+  }
   async cobrar(cobro: cobroDto) {
-    let prestamo = await this.prestamoModel.findById(cobro.id);
+    const prestamo = await this.prestamoModel.findById(cobro.id);
     if (prestamo) {
       prestamo.abono.push({
         fecha: new Date(),
@@ -93,7 +119,7 @@ export class PrestamoService {
       if (prestamo.cuotas <= prestamo.abono.length) {
         prestamo.cuota_sugerida = prestamo.total - abonado;
       } else {
-        let cuotasRestantes = prestamo.cuotas - prestamo.abono.length;
+        const cuotasRestantes = prestamo.cuotas - prestamo.abono.length;
         prestamo.cuota_sugerida = Math.ceil(
           (prestamo.total - abonado) / cuotasRestantes,
         );
@@ -106,10 +132,10 @@ export class PrestamoService {
   @Cron(CronExpression.EVERY_DAY_AT_1AM)
   async actualizarCobros() {
     try {
-      let prestamosVigentes = await this.prestamoModel.find({
+      const prestamosVigentes = await this.prestamoModel.find({
         completado: false,
       });
-      let prestamosActualizados = prestamosVigentes.map(async (prestamo) => {
+      const prestamosActualizados = prestamosVigentes.map(async (prestamo) => {
         let abonado: number = 0;
         prestamo.abono.forEach((abono) => {
           abonado += abono.monto;
@@ -138,7 +164,7 @@ export class PrestamoService {
         if (prestamo.cuotas <= prestamo.abono.length) {
           prestamo.cuota_sugerida = prestamo.total - abonado;
         } else {
-          let cuotasRestantes = prestamo.cuotas - prestamo.abono.length;
+          const cuotasRestantes = prestamo.cuotas - prestamo.abono.length;
           prestamo.cuota_sugerida = Math.ceil(
             (prestamo.total - abonado) / cuotasRestantes,
           );
@@ -212,10 +238,10 @@ export class PrestamoService {
     return await this.clienteService.clientesSinPrestamis(idClientes);
   }
   async estadisticas() {
-    let ventaDataSet = new Array(12).fill(0);
-    let abonoDataSet = new Array(12).fill(0);
+    const ventaDataSet = new Array(12).fill(0);
+    const abonoDataSet = new Array(12).fill(0);
     const year = new Date().getFullYear();
-    let semana = [
+    const semana = [
       'Domingo',
       'Lunes',
       'Martes',
@@ -224,19 +250,19 @@ export class PrestamoService {
       'Viernes',
       'Sábado',
     ];
-    let yearC = {
+    const yearC = {
       fecha: year,
       total: 0,
       ventas: 0,
       abono: 0,
     };
-    let mes = {
+    const mes = {
       fecha: new Date().getMonth(),
       total: 0,
       ventas: 0,
       abono: 0,
     };
-    let hoy = {
+    const hoy = {
       fecha: semana[DateTime.now().setZone('America/Bogota').weekday],
       total: 0,
       ventas: 0,

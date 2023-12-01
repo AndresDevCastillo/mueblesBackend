@@ -70,6 +70,9 @@ export class CreateClienteDto {
   @IsObject()
   direccion: DireccionDto;
 
+  @IsNotEmpty()
+  direccionResidencia: string;
+
   @IsObject()
   venta: PrestamoDto;
 }

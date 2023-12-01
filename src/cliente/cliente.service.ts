@@ -12,6 +12,7 @@ import * as excelToJson from 'convert-excel-to-json';
 import * as fs from 'fs';
 import Decimal from 'decimal.js';
 import { Console } from 'console';
+import { ClienteAntiguoDto } from './dto/clienteAntiguo.dto';
 @Injectable()
 export class ClienteService {
   private diasSemana = [
@@ -90,7 +91,23 @@ export class ClienteService {
       return this.handleBDerrors(error);
     }
   }
-
+  async crearClienteAntiguo(clienteAntiguo: ClienteAntiguoDto) {
+    const now = moment().tz('America/Bogota').format();
+    try {
+      const exist = await this.existCliente(clienteAntiguo.documento);
+      if (!exist) {
+        return await this.clienteModel.create({
+          ...clienteAntiguo,
+          creacion: now,
+        });
+      }
+      return await this.clienteModel.findOne({
+        documento: clienteAntiguo.documento,
+      });
+    } catch (error) {
+      return false;
+    }
+  }
   async findAll() {
     try {
       return await this.clienteModel.find().populate('direccion');
@@ -109,7 +126,7 @@ export class ClienteService {
     try {
       const ruta = await this.puebloModel.findById(updateClienteDto.direccion);
       console.log(ruta);
-      let resp = await this.prestamoModel.updateMany(
+      const resp = await this.prestamoModel.updateMany(
         { cliente: updateClienteDto.id },
         { $set: { ruta: ruta.nombre } },
       );
@@ -292,13 +309,13 @@ export class ClienteService {
           if (typeof total == 'string') {
             total = total.replace(/[,.]/g, '');
           }
-          let totalCliente = parseInt(cliente['F'].replace(/\./g, ''));
-          let saldoCliente = parseFloat(
+          const totalCliente = parseInt(cliente['F'].replace(/\./g, ''));
+          const saldoCliente = parseFloat(
             cliente['M'].replace(/\./g, '').replace(',', '.'),
           );
-          let totalPagado = totalCliente - saldoCliente;
-          let cuotaRedondeada = Math.ceil(parseFloat(cliente['K']));
-          let abonos = this.calcularCuotas(totalPagado, cuotaRedondeada);
+          const totalPagado = totalCliente - saldoCliente;
+          const cuotaRedondeada = Math.ceil(parseFloat(cliente['K']));
+          const abonos = this.calcularCuotas(totalPagado, cuotaRedondeada);
           prestamosGuardar.push({
             ruta: puebloSinRuta.nombre,
             producto: cliente['Q'],
