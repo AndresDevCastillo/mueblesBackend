@@ -271,6 +271,10 @@ export class PrestamoService {
     const prestamos = await this.prestamoModel.find({
       fecha_inicio: { $regex: '.*' + year + '.*' },
     });
+    const prestamosViejos = await this.prestamoModel.find({
+      fecha_inicio: { $not: { $regex: '.*' + year + '.*' } },
+    });
+    console.log(prestamosViejos);
     // Recorro prestamos
     prestamos.forEach((prestamo) => {
       yearC.ventas += 1;
@@ -288,8 +292,8 @@ export class PrestamoService {
           hoy.total += prestamo.total;
         }
       }
-      // Valido las fechas de los abonos
       ventaDataSet[parseInt(mesArray[1]) - 1] += prestamo.total;
+      // Valido las fechas de los abonos
       prestamo.abono.forEach((abono) => {
         if (new Date().getMonth() == new Date(abono.fecha).getMonth()) {
           mes.abono += abono.monto;
@@ -299,8 +303,24 @@ export class PrestamoService {
         }
 
         yearC.abono += abono.monto;
-        const mesAbono = abono.fecha.toISOString().split('-');
+        const mesAbono = new Date(abono.fecha).toISOString().split('-');
         abonoDataSet[parseInt(mesAbono[1]) - 1] += abono.monto;
+      });
+    });
+    prestamosViejos.forEach((prestamo) => {
+      // Valido las fechas de los abonos
+      prestamo.abono.forEach((abono) => {
+        if (new Date().getFullYear() == new Date(abono.fecha).getFullYear()) {
+          yearC.abono += abono.monto;
+          const mesAbono = new Date(abono.fecha).toISOString().split('-');
+          abonoDataSet[parseInt(mesAbono[1]) - 1] += abono.monto;
+          if (new Date().getMonth() == new Date(abono.fecha).getMonth()) {
+            mes.abono += abono.monto;
+            if (this.sonFechasIguales(new Date(), new Date(abono.fecha))) {
+              hoy.abono += abono.monto;
+            }
+          }
+        }
       });
     });
 
