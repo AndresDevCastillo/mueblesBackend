@@ -203,7 +203,7 @@ export class PrestamoService {
           0, // Segundos en UTC
           0, // Milisegundos en UTC
         ),
-      ).toISOString();
+      );
       const cobros = await this.prestamoModel
         .find({
           completado: false,
@@ -211,7 +211,7 @@ export class PrestamoService {
         .populate('cliente');
       const cobrosHoy = cobros.filter((cobro) => {
         return cobro.pago_fechas.some((fechas_pago) => {
-          return new Date(fechas_pago.fecha).toISOString() === hoyFormateada;
+          return this.sonFechasIgualesCobro(fechas_pago.fecha, hoyFormateada);
         });
       });
       return cobrosHoy;
@@ -274,7 +274,6 @@ export class PrestamoService {
     const prestamosViejos = await this.prestamoModel.find({
       fecha_inicio: { $not: { $regex: '.*' + year + '.*' } },
     });
-    console.log(prestamosViejos);
     // Recorro prestamos
     prestamos.forEach((prestamo) => {
       yearC.ventas += 1;
@@ -344,6 +343,25 @@ export class PrestamoService {
     );
   }
   private sonFechasIguales(fecha1: Date, fecha2: Date) {
+    return (
+      fecha1.getFullYear() === fecha2.getFullYear() &&
+      fecha1.getMonth() === fecha2.getMonth() &&
+      fecha1.getDate() === fecha2.getDate()
+    );
+  }
+  private sonFechasIgualesCobro(fecha1: Date, fecha2: Date) {
+    fecha1 = new Date(fecha1);
+    fecha1 = new Date(
+      Date.UTC(
+        fecha1.getFullYear(),
+        fecha1.getMonth(),
+        fecha1.getDate(),
+        0, // Hora en UTC
+        0, // Minutos en UTC
+        0, // Segundos en UTC
+        0, // Milisegundos en UTC
+      ),
+    );
     return (
       fecha1.getFullYear() === fecha2.getFullYear() &&
       fecha1.getMonth() === fecha2.getMonth() &&

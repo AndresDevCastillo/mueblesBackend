@@ -125,12 +125,10 @@ export class ClienteService {
   async update(updateClienteDto: UpdateClienteDto) {
     try {
       const ruta = await this.puebloModel.findById(updateClienteDto.direccion);
-      console.log(ruta);
       const resp = await this.prestamoModel.updateMany(
         { cliente: updateClienteDto.id },
         { $set: { ruta: ruta.nombre } },
       );
-      console.log(resp);
       return await this.clienteModel.findByIdAndUpdate(
         updateClienteDto.id,
         updateClienteDto,
