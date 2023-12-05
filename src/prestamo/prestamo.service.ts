@@ -129,7 +129,7 @@ export class PrestamoService {
     return new NotFoundException('EL prestamo no existe');
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_1AM)
+  @Cron(CronExpression.EVERY_6_HOURS)
   async actualizarCobros() {
     try {
       const prestamosVigentes = await this.prestamoModel.find({
@@ -174,6 +174,9 @@ export class PrestamoService {
       const prestamosActualizadosResolved = await Promise.all(
         prestamosActualizados,
       );
+      await this.cronModel.deleteMany({
+        nombre: 'Actualizo las ventas activas',
+      });
       await this.cronModel.create({
         nombre: 'Actualizo las ventas activas',
         fecha: new Date().toLocaleString('es-ES'),
