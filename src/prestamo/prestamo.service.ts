@@ -13,6 +13,7 @@ import { Inventario } from 'src/inventario/schema/inventario.schema';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { CronMongo } from 'src/cron/schema/cron.schema';
 import { AbonosDto } from './dto/abonos.dto';
+import { ActualizarVentaDto } from './dto/actualizarVenta.dto';
 const { DateTime } = require('luxon');
 
 @Injectable()
@@ -186,6 +187,24 @@ export class PrestamoService {
       this.handleBDerrors(error);
     }
   }
+
+  async actualizarVenta(actVenta: ActualizarVentaDto) {
+    const venta = await this.prestamoModel.findById(actVenta.venta);
+    if (venta) {
+      try {
+        venta.cuotas += actVenta.cuotas;
+        venta.ruta = actVenta.ruta;
+        venta.producto = actVenta.producto;
+        venta.pago_fechas.push(...actVenta.fechas_pago);
+        await venta.save();
+        return { status: true, message: 'Venta actualizada' };
+      } catch (error) {
+        return this.handleBDerrors(error, 500);
+      }
+    }
+    return { status: false, message: 'No se encontró la venta' };
+  }
+
   async findAll() {
     try {
       return await this.prestamoModel.find().populate('cliente');

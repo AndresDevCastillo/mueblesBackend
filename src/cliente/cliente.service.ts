@@ -10,8 +10,6 @@ import { Pueblo } from 'src/pueblo/schema/pueblo.schema';
 import * as moment from 'moment-timezone';
 import * as excelToJson from 'convert-excel-to-json';
 import * as fs from 'fs';
-import Decimal from 'decimal.js';
-import { Console } from 'console';
 import { ClienteAntiguoDto } from './dto/clienteAntiguo.dto';
 @Injectable()
 export class ClienteService {
@@ -47,6 +45,7 @@ export class ClienteService {
               telefono: createClienteDto.telefono,
               correo: createClienteDto.correo,
               direccion: createClienteDto.direccion._id,
+              direccionResidencia: createClienteDto.direccionResidencia,
               creacion: now,
             });
             await this.prestamoModel.create({
@@ -74,7 +73,7 @@ export class ClienteService {
                   inventario[0].existencias - createClienteDto.venta.cantidad,
               },
             );
-            return { status: 201, message: 'Cliente creado correctament' };
+            return { status: 201, message: 'Cliente creado correctamente' };
           }
           return this.handleBDerrors(
             `No hay suficientes ${createClienteDto.venta.producto}, sólo hay ${inventario[0].existencias}`,
@@ -125,10 +124,6 @@ export class ClienteService {
   async update(updateClienteDto: UpdateClienteDto) {
     try {
       const ruta = await this.puebloModel.findById(updateClienteDto.direccion);
-      const resp = await this.prestamoModel.updateMany(
-        { cliente: updateClienteDto.id },
-        { $set: { ruta: ruta.nombre } },
-      );
       return await this.clienteModel.findByIdAndUpdate(
         updateClienteDto.id,
         updateClienteDto,
@@ -210,19 +205,16 @@ export class ClienteService {
     await this.clienteModel.deleteMany({ _id: { $in: idClientes } });
   }
   async subirClientes(excel: Express.Multer.File) {
-    const now = moment().tz('America/Bogota').format();
-
     const excelJson = await excelToJson({ sourceFile: excel.path });
     const puebloSinRuta = await this.getPuebloSinRuta();
-    //await this.prestamoModel.deleteMany({ ruta: { $in: ['Sin ruta'] } });
-    //await this.deleteClientByRuta(puebloSinRuta._id);
+    await this.prestamoModel.deleteMany({ ruta: { $in: ['Sin ruta'] } });
+    await this.deleteClientByRuta(puebloSinRuta._id);
     const documentos = await this.getDocumentos();
     const keyObj = Object.keys(excelJson);
     const clientes: object[] = [];
     const clientesExist: object[] = [];
     const clientesGuardar: object[] = [];
     let prestamosGuardar: object[] = [];
-
     keyObj.forEach(async (sheet, index) => {
       if (index == 0) {
         excelJson[sheet].splice(0, 2);
@@ -284,53 +276,39 @@ export class ClienteService {
             telefono: cliente['D'],
             correo: 'No aplica',
             direccion: puebloSinRuta._id,
+            direccionResidencia: cliente['E'],
             mora: false,
-            creacion: new Date(cliente['A']).toISOString().toString(),
+            creacion: moment(cliente['A']).tz('America/Bogota').format(),
           });
-          let fechaPagos = await this.calcularFechasPago(
-            cliente['A'],
-            cliente['O'],
-            cliente['J'],
-          );
-          const fArray: string[] = cliente['A'].split('-');
-          const fechaInicio = new Date(
-            `${fArray[0]}-${parseInt(fArray[1])}-${parseInt(fArray[2])}`,
-          );
-          fechaPagos = fechaPagos.map((fecha) => {
-            return {
-              fecha: new Date(fecha.fecha),
-              monto: parseFloat(cliente['I'].replace(',', '.')),
-            };
-          });
+          const fechaInicio = moment(cliente['A'])
+            .tz('America/Bogota')
+            .format();
 
-          let total = cliente['G'];
-          if (typeof total == 'string') {
-            total = total.replace(/[,.]/g, '');
-          }
-          const totalCliente = parseInt(cliente['F'].replace(/\./g, ''));
-          const saldoCliente = parseFloat(
-            cliente['M'].replace(/\./g, '').replace(',', '.'),
-          );
-          const totalPagado = totalCliente - saldoCliente;
-          const cuotaRedondeada = Math.ceil(parseFloat(cliente['K']));
-          const abonos = this.calcularCuotas(totalPagado, cuotaRedondeada);
+          const fUltPago = cliente['P'] ? cliente['P'] : cliente['A'];
+          const fechaPago = moment(fUltPago).tz('America/Bogota').format();
+          const total = parseFloat(cliente['G'].replaceAll('.', ''));
+          const debe = parseFloat(cliente['M'].replaceAll('.', ''));
+          const monto = total - debe == 0 ? total : total - debe;
+
+          const pagoFechas = [
+            {
+              fecha: fechaPago,
+              monto: monto,
+            },
+          ];
+
           prestamosGuardar.push({
             ruta: puebloSinRuta.nombre,
-            producto: cliente['Q'],
+            producto: '',
             cantidad: 1,
-            fecha_inicio: fechaInicio.toISOString().toString(),
-            cuotas: parseInt(cliente['J']),
-            pago_fechas: fechaPagos,
-            abono: new Array(abonos.length).fill(0).map((ab, index) => {
-              return {
-                fecha: fechaPagos[index].fecha,
-                monto: abonos[index],
-              };
-            }),
+            fecha_inicio: fechaInicio,
+            cuotas: 1,
+            pago_fechas: pagoFechas,
+            abono: pagoFechas,
             cuotas_atrasadas: 0,
-            completado: parseInt(cliente['J']) == parseInt(cliente['K']),
+            completado: debe == 0,
             mora: false,
-            total: parseInt(total, 10),
+            total: total,
           });
         }
       }
@@ -352,159 +330,6 @@ export class ClienteService {
     };
   }
 
-  private async calcularFechasPago(
-    fechaInicio: string,
-    frecuenciaCobro = 'diario',
-    cuotas = 1,
-  ) {
-    const fArray: string[] = fechaInicio.split('-');
-    const detalleFrecuencia = frecuenciaCobro.split(' (');
-    const fechaActual = new Date(
-      `${fArray[0]}-${parseInt(fArray[1])}-${parseInt(fArray[2])}`,
-    );
-    const diaActual = fechaActual.getDay();
-
-    const fechaPagos = [];
-    let diaFrecuencia = 0;
-    const milisDia = 24 * 60 * 60 * 1000;
-    let aumentoDias = 1,
-      diaSemana: any;
-    let sinComplex = true;
-
-    switch (detalleFrecuencia[0].toLowerCase()) {
-      case 'diario':
-        sinComplex = true;
-        aumentoDias = 1;
-        break;
-      case 'semanal':
-        diaSemana = detalleFrecuencia[1].slice(
-          0,
-          detalleFrecuencia[1].length - 1,
-        );
-        sinComplex = true;
-        diaFrecuencia = this.diasSemana.findIndex(
-          (dia) => dia.toLowerCase() == diaSemana.toLowerCase(),
-        );
-        if (diaActual > diaFrecuencia) {
-          aumentoDias = 7 - (diaActual - diaFrecuencia);
-        } else if (diaActual < diaFrecuencia) {
-          aumentoDias = diaFrecuencia - diaActual;
-        } else {
-          aumentoDias = 7;
-        }
-        break;
-      case 'quincenal':
-        diaSemana = detalleFrecuencia[1].split(' ');
-        diaSemana = diaSemana[1].split('/');
-        diaSemana[0] = parseInt(diaSemana[0]);
-        diaSemana[1] = parseInt(diaSemana[1]);
-        if (
-          fechaActual.getDate() < diaSemana[0] &&
-          fechaActual.getDate() < diaSemana[1]
-        ) {
-          fechaActual.setDate(diaSemana[0]);
-          fechaPagos.push({
-            fecha: `${fechaActual.getFullYear()}-${
-              (fechaActual.getMonth() + 1 < 10 ? '0' : '') +
-              (fechaActual.getMonth() + 1)
-            }-${(diaSemana[0] < 10 ? '0' : '') + diaSemana[0]}`,
-          });
-        } else if (
-          fechaActual.getDate() >= diaSemana[0] &&
-          fechaActual.getDate() < diaSemana[1]
-        ) {
-          fechaActual.setDate(diaSemana[1]);
-          fechaPagos.push({
-            fecha: `${fechaActual.getFullYear()}-${
-              (fechaActual.getMonth() + 1 < 10 ? '0' : null) +
-              (fechaActual.getMonth() + 1)
-            }-${(diaSemana[1] < 10 ? '0' : '') + diaSemana[1]}`,
-          });
-        }
-        fechaActual.setMonth(fechaActual.getMonth() + 1);
-
-        sinComplex = false;
-        while (fechaPagos.length < cuotas) {
-          const indexDia = diaSemana.findIndex(
-            (dia) => dia != fechaActual.getDate(),
-          );
-          fechaPagos.push({
-            fecha: `${fechaActual.getFullYear()}-${
-              (fechaActual.getMonth() + 1 < 10 ? '0' : null) +
-              (fechaActual.getMonth() + 1)
-            }-${(diaSemana[indexDia] < 10 ? '0' : '') + diaSemana[indexDia]}`,
-          });
-          fechaActual.setDate(diaSemana[indexDia]);
-          if (indexDia == 1) {
-            fechaActual.setMonth(fechaActual.getMonth() + 1);
-          }
-        }
-        break;
-      case 'mensual':
-        sinComplex = false;
-        diaSemana = detalleFrecuencia[1].split(' ');
-        diaSemana[1] = parseInt(diaSemana[1]);
-        if (fechaActual.getDate() >= diaSemana[1]) {
-          fechaActual.setDate(diaSemana[1]);
-          fechaActual.setMonth(fechaActual.getMonth() + 1);
-        } else {
-          fechaActual.setDate(diaSemana[1]);
-        }
-        while (fechaPagos.length < cuotas) {
-          fechaPagos.push({
-            fecha: `${fechaActual.getFullYear()}-${
-              (fechaActual.getMonth() + 1 < 10 ? '0' : '') +
-              (fechaActual.getMonth() + 1)
-            }-${(diaSemana[1] < 10 ? '0' : '') + diaSemana[1]}`,
-          });
-          fechaActual.setMonth(fechaActual.getMonth() + 1);
-        }
-        break;
-    }
-    if (sinComplex) {
-      while (fechaPagos.length < cuotas) {
-        fechaActual.setTime(fechaActual.getTime() + aumentoDias * milisDia);
-        //No es domingo
-        if (fechaActual.getDay() != 0) {
-          fechaPagos.push({
-            fecha: `${fechaActual.getFullYear()}-${
-              (fechaActual.getMonth() + 1 < 10 ? '0' : '') +
-              (fechaActual.getMonth() + 1)
-            }-${
-              (fechaActual.getDate() < 10 ? '0' : '') + fechaActual.getDate()
-            }`,
-          });
-          switch (detalleFrecuencia[0].toLowerCase()) {
-            case 'diario':
-              aumentoDias = 1;
-              break;
-
-            case 'semanal':
-              aumentoDias = 7;
-              break;
-          }
-        }
-      }
-    }
-    return fechaPagos;
-  }
-  private calcularCuotas(total: number, numeroCuotas: number) {
-    if (numeroCuotas == 0) {
-      return [];
-    }
-    if (numeroCuotas == 1) {
-      return [total];
-    }
-    const cuotaBase = Math.floor(total / numeroCuotas / 1000) * 1000;
-
-    const diferenciaTotal = total - cuotaBase * numeroCuotas;
-
-    const cuotas = Array.from({ length: numeroCuotas }, (_, index) => {
-      const ajuste = index < Math.ceil(diferenciaTotal / 1000) ? 1000 : 0;
-      return cuotaBase + ajuste;
-    });
-    return cuotas;
-  }
   private handleBDerrors(error: any, codeError = 500) {
     console.log(error);
     throw new HttpException(
