@@ -11,6 +11,12 @@ export class ActualizarVentaDto {
   @IsNotEmpty()
   readonly producto: string;
 
+  @IsNotEmpty()
+  readonly cliente: string;
+
+  @IsNotEmpty()
+  readonly idRuta: string;
+
   @IsNumber()
   readonly cuotas: number;
 

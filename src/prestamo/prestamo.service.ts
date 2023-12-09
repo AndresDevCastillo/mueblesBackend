@@ -192,6 +192,7 @@ export class PrestamoService {
     const venta = await this.prestamoModel.findById(actVenta.venta);
     if (venta) {
       try {
+        await this.clienteService.actualizarRutaCliente(actVenta.cliente, actVenta.idRuta);
         venta.cuotas += actVenta.cuotas;
         venta.ruta = actVenta.ruta;
         venta.producto = actVenta.producto;

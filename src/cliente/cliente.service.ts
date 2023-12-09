@@ -329,6 +329,17 @@ export class ClienteService {
       message: `Se agregaron ${clientesG.length} clientes, clientes omitidos ${clientesExist.length}`,
     };
   }
+  async actualizarRutaCliente(idCliente: string, idRuta: string){
+    try {
+      await this.clienteModel.findByIdAndUpdate(idCliente, {
+        $set: {
+          direccion: idRuta
+        }
+      })
+    } catch(error) {
+      this.handleBDerrors(error);
+    }
+  }
 
   private handleBDerrors(error: any, codeError = 500) {
     console.log(error);
