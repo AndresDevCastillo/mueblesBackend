@@ -15,35 +15,31 @@ import { JwtAuthGuard } from 'src/guard/jwt-auth.guard';
 import { ValidateObjectidPipe } from 'src/common/validate-objectid/validate-objectid.pipe';
 
 @Controller('producto')
+@UseGuards(JwtAuthGuard)
 export class ProductoController {
   constructor(private readonly productoService: ProductoService) {}
 
   @Post('/crear')
-  @UseGuards(JwtAuthGuard)
   async create(@Body() createProductoDto: CreateProductoDto) {
     return await this.productoService.create(createProductoDto);
   }
 
   @Get()
-  @UseGuards(JwtAuthGuard)
   async findAll() {
     return await this.productoService.findAll();
   }
 
   @Get('/:id')
-  @UseGuards(JwtAuthGuard)
   findOne(@Param('id', ValidateObjectidPipe) id: string) {
     return this.productoService.findOne(id);
   }
 
   @Put('/actualizar')
-  @UseGuards(JwtAuthGuard)
   async update(@Body() updateProductoDto: UpdateProductoDto) {
     return await this.productoService.update(updateProductoDto);
   }
 
   @Delete('/:id')
-  @UseGuards(JwtAuthGuard)
   remove(@Param('id', ValidateObjectidPipe) id: string) {
     return this.productoService.remove(id);
   }

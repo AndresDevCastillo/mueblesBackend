@@ -28,7 +28,6 @@ export class ClienteController {
   }
 
   @Post('/subir')
-  @UseGuards(JwtAuthGuard)
   @UseInterceptors(
     FileInterceptor('excel', {
       storage: diskStorage({

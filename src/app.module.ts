@@ -13,6 +13,7 @@ import { PrestamoModule } from './prestamo/prestamo.module';
 import configuration from './config/configuration';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CronModule } from './cron/cron.module';
+import { BodegaModule } from './bodega/bodega.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { CronModule } from './cron/cron.module';
     ClienteModule,
     PrestamoModule,
     CronModule,
+    BodegaModule,
   ],
   controllers: [AppController],
   providers: [AppService],
