@@ -59,7 +59,7 @@ export class PrestamoService {
       this.handleBDerrors(error);
     }
   }
-  async abonar(abonos: AbonosDto) {
+  async abonar(abonos: AbonosDto, cobrador: string) {
     const cliente = await this.clienteService.crearClienteAntiguo({
       documento: abonos.documento,
       nombres: abonos.nombres,
@@ -70,6 +70,12 @@ export class PrestamoService {
       direccionResidencia: abonos.direccionResidencia,
     });
     if (cliente) {
+      let abonosCobrador = abonos.abonos.map(abono => {
+        return {
+          ...abono,
+          cobrador
+        }
+      })
       return await this.prestamoModel.create({
         cliente: cliente._id,
         ruta: abonos.rutaPlana,
@@ -78,19 +84,20 @@ export class PrestamoService {
         fecha_inicio: abonos.fechaVenta,
         cuotas: abonos.pago_fechas.length,
         pago_fechas: abonos.pago_fechas,
-        abono: abonos.abonos,
+        abono: abonosCobrador,
         total: abonos.total,
         completado: abonos.pago_fechas.length == 0,
       });
     }
     return this.handleBDerrors('Ya existe un cliente con ese documento', 409);
   }
-  async cobrar(cobro: cobroDto) {
+  async cobrar(cobro: cobroDto, cobrador:string) {
     const prestamo = await this.prestamoModel.findById(cobro.id);
     if (prestamo) {
       prestamo.abono.push({
         fecha: new Date(),
         monto: cobro.abono,
+        cobrador
       });
       let abonado: number = 0;
       prestamo.abono.forEach((abono) => {

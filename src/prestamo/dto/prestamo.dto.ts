@@ -12,6 +12,7 @@ export class PagoFechas {
 export class Abonos {
   readonly fecha: Date;
   readonly monto: number;
+  readonly cobrador: string;
 }
 export class CreatePrestamoDto {
   @IsMongoId()

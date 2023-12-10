@@ -51,6 +51,8 @@ export class AbonoDto {
 
   @IsNumber()
   readonly monto: number;
+
+  cobrador: string;
 }
 export class PagoFechasDto {
   @IsDateString()

@@ -7,67 +7,84 @@ import { ProductoService } from 'src/producto/producto.service';
 
 @Injectable()
 export class InventarioService {
-  constructor(@InjectModel(Inventario.name) private inventarioModel: Model<Inventario>,
-  @Inject(ProductoService) private readonly productoService : ProductoService
-  ){}
+  constructor(
+    @InjectModel(Inventario.name) private inventarioModel: Model<Inventario>,
+    @Inject(ProductoService) private readonly productoService: ProductoService,
+  ) {}
   async create(createInventarioDto: CreateInventarioDto) {
     try {
       return await this.inventarioModel.create({
         ...createInventarioDto,
-        existencias: createInventarioDto.cantidad
+        existencias: createInventarioDto.cantidad,
       });
-    } catch(error) {
+    } catch (error) {
       this.handleBDerrors(error);
     }
   }
 
   async findAll() {
     try {
-    return await this.inventarioModel.find().populate('producto');
-    } catch(error) {
+      return await this.inventarioModel.find().populate('producto').populate('bodega');
+    } catch (error) {
       this.handleBDerrors(error);
     }
   }
-   async findAllExiste() {
+  async findAllExiste() {
     try {
-    return await this.inventarioModel.find({existencias : {$gt: 0}}).populate('producto');
-    } catch(error) {
+      return await this.inventarioModel
+        .find({ existencias: { $gt: 0 } })
+        .populate('producto').populate('bodega').then(data => {
+        return data.map((inventario: any) => {
+          if(inventario.bodega) {
+            inventario.producto.nombre = `${inventario.producto.nombre} - ${inventario.bodega.nombre}`;
+          }
+          return inventario;
+        });
+      });
+    } catch (error) {
       this.handleBDerrors(error);
     }
   }
 
   async findOne(id: string) {
     try {
-      return await this.inventarioModel.findById(id).populate('producto');
-    } catch(error) {
+      return await this.inventarioModel
+        .findById(id)
+        .populate('producto').populate('bodega');
+    } catch (error) {
       this.handleBDerrors(error);
     }
   }
 
   async update(updateInventarioDto: UpdateInventarioDto) {
     try {
-      return await this.inventarioModel.findByIdAndUpdate(updateInventarioDto.id, {
-        ...updateInventarioDto
-      })
-    } catch(error) {
+      return await this.inventarioModel.findByIdAndUpdate(
+        updateInventarioDto.id,
+        {
+          ...updateInventarioDto,
+        },
+      );
+    } catch (error) {
       this.handleBDerrors(error);
     }
   }
-async productosSinInventario(){
-  try {
-    const inventarioQuery = await this.inventarioModel.find().populate('producto');
-    const inventarioId = inventarioQuery.map((invetario:any) => {
-      return invetario.producto._id;
-    })
-    return await this.productoService.productosSinInventario(inventarioId);
-  } catch(error){
-    this.handleBDerrors(error);
+  async productosSinInventario() {
+    try {
+      const inventarioQuery = await this.inventarioModel
+        .find()
+        .populate('producto').populate('bodega');
+      const inventarioId = inventarioQuery.map((invetario: any) => {
+        return invetario.producto._id;
+      });
+      return await this.productoService.productosSinInventario(inventarioId);
+    } catch (error) {
+      this.handleBDerrors(error);
+    }
   }
-}
   async remove(id: string) {
     try {
       return await this.inventarioModel.findByIdAndDelete(id);
-    } catch(error){
+    } catch (error) {
       this.handleBDerrors(error);
     }
   }

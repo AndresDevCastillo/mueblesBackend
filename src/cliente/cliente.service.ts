@@ -13,15 +13,6 @@ import * as fs from 'fs';
 import { ClienteAntiguoDto } from './dto/clienteAntiguo.dto';
 @Injectable()
 export class ClienteService {
-  private diasSemana = [
-    'Domingo',
-    'Lunes',
-    'Martes',
-    'Miércoles',
-    'Jueves',
-    'Viernes',
-    'Sábado',
-  ];
   constructor(
     @InjectModel(Cliente.name) private clienteModel: Model<Cliente>,
     @InjectModel(Inventario.name) private inventarioModel: Model<Inventario>,
@@ -204,7 +195,7 @@ export class ClienteService {
       });
     await this.clienteModel.deleteMany({ _id: { $in: idClientes } });
   }
-  async subirClientes(excel: Express.Multer.File) {
+  async subirClientes(excel: Express.Multer.File, cobrador: string) {
     const excelJson = await excelToJson({ sourceFile: excel.path });
     const puebloSinRuta = await this.getPuebloSinRuta();
     await this.prestamoModel.deleteMany({ ruta: { $in: ['Sin ruta'] } });
@@ -296,6 +287,13 @@ export class ClienteService {
               monto: monto,
             },
           ];
+          const abonoFecha = [
+            {
+              fecha: fechaPago,
+              monto: monto,
+              cobrador: cobrador
+            },
+          ];
 
           prestamosGuardar.push({
             ruta: puebloSinRuta.nombre,
@@ -304,7 +302,7 @@ export class ClienteService {
             fecha_inicio: fechaInicio,
             cuotas: 1,
             pago_fechas: pagoFechas,
-            abono: pagoFechas,
+            abono: abonoFecha,
             cuotas_atrasadas: 0,
             completado: debe == 0,
             mora: false,

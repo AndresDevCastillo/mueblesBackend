@@ -9,6 +9,7 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFile,
+  Request,
 } from '@nestjs/common';
 import { ClienteService } from './cliente.service';
 import { CreateClienteDto, UpdateClienteDto } from './dto/cliente.dto';
@@ -43,8 +44,8 @@ export class ClienteController {
       }),
     }),
   )
-  async subirClientes(@UploadedFile() excel: Express.Multer.File) {
-    return await this.clienteService.subirClientes(excel);
+  async subirClientes(@UploadedFile() excel: Express.Multer.File, @Request() {user}) {
+    return await this.clienteService.subirClientes(excel, user[0].nombre);
   }
 
   @Get()

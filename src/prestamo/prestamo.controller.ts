@@ -7,6 +7,7 @@ import {
   Param,
   UseGuards,
   Put,
+  Request,
 } from '@nestjs/common';
 import { PrestamoService } from './prestamo.service';
 import { CreatePrestamoDto, cobroDto } from './dto/prestamo.dto';
@@ -26,13 +27,13 @@ export class PrestamoController {
   }
 
   @Post('/cobrar')
-  async cobrar(@Body() cobro: cobroDto) {
-    return await this.prestamoService.cobrar(cobro);
+  async cobrar(@Body() cobro: cobroDto, @Request() {user}) {
+    return await this.prestamoService.cobrar(cobro, user[0].nombre);
   }
 
   @Post('/abonar')
-  async abonar(@Body() abonos: AbonosDto) {
-    return await this.prestamoService.abonar(abonos);
+  async abonar(@Body() abonos: AbonosDto, @Request() {user}) {
+    return await this.prestamoService.abonar(abonos, user[0].nombre);
   }
 
   @Get()
