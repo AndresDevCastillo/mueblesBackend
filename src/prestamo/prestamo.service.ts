@@ -298,6 +298,8 @@ export class PrestamoService {
       ventas: 0,
       abono: 0,
     };
+    let cobradores = [[],[]];
+
     const prestamos = await this.prestamoModel.find({
       fecha_inicio: { $regex: '.*' + year + '.*' },
     });
@@ -328,9 +330,16 @@ export class PrestamoService {
           mes.abono += abono.monto;
           if (this.sonFechasIguales(new Date(), new Date(abono.fecha))) {
             hoy.abono += abono.monto;
+            let indexCobrador = cobradores[0].findIndex((cobrador) => cobrador == abono.cobrador);
+            if(indexCobrador !== -1) {
+            cobradores[1][indexCobrador] += abono.monto;
+            }
+            else {
+            cobradores[0].push(abono.cobrador);
+            cobradores[1].push(abono.monto);
+        }
           }
         }
-
         yearC.abono += abono.monto;
         const mesAbono = new Date(abono.fecha).toISOString().split('-');
         abonoDataSet[parseInt(mesAbono[1]) - 1] += abono.monto;
@@ -347,18 +356,26 @@ export class PrestamoService {
             mes.abono += abono.monto;
             if (this.sonFechasIguales(new Date(), new Date(abono.fecha))) {
               hoy.abono += abono.monto;
+              let indexCobrador = cobradores[0].findIndex((cobrador) => cobrador == abono.cobrador);
+              if(indexCobrador !== -1) {
+              cobradores[1][indexCobrador] += abono.monto;
+              }
+              else {
+              cobradores[0].push(abono.cobrador);
+              cobradores[1].push(abono.monto);
+              }
             }
           }
         }
       });
     });
-
     return {
       ventas: ventaDataSet,
       abonos: abonoDataSet,
       year: yearC,
       mes: mes,
       hoy: hoy,
+      cobradores: cobradores
     };
   }
 
