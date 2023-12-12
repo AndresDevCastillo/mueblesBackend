@@ -15,6 +15,7 @@ import { ValidateObjectidPipe } from 'src/common/validate-objectid/validate-obje
 import { JwtAuthGuard } from 'src/guard/jwt-auth.guard';
 import { AbonosDto } from './dto/abonos.dto';
 import { ActualizarVentaDto } from './dto/actualizarVenta.dto';
+import { AbonoVentaDto } from './dto/abono.dto';
 
 @Controller('prestamo')
 @UseGuards(JwtAuthGuard)
@@ -27,12 +28,12 @@ export class PrestamoController {
   }
 
   @Post('/cobrar')
-  async cobrar(@Body() cobro: cobroDto, @Request() {user}) {
+  async cobrar(@Body() cobro: cobroDto, @Request() { user }) {
     return await this.prestamoService.cobrar(cobro, user[0].nombre);
   }
 
   @Post('/abonar')
-  async abonar(@Body() abonos: AbonosDto, @Request() {user}) {
+  async abonar(@Body() abonos: AbonosDto, @Request() { user }) {
     return await this.prestamoService.abonar(abonos, user[0].nombre);
   }
 
@@ -62,6 +63,11 @@ export class PrestamoController {
   @Put('/actualizarVenta')
   async actualizarVenta(@Body() actualizarVenta: ActualizarVentaDto) {
     return await this.prestamoService.actualizarVenta(actualizarVenta);
+  }
+
+  @Put('/abonar/venta')
+  async abonarVenta(@Body() abono: AbonoVentaDto, @Request() { user }) {
+    return await this.prestamoService.abonarVenta(abono, user[0].nombre);
   }
   @Delete('/:id')
   async delete(@Param('id', ValidateObjectidPipe) id: string) {

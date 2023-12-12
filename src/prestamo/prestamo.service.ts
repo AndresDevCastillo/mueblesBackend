@@ -14,6 +14,8 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { CronMongo } from 'src/cron/schema/cron.schema';
 import { AbonosDto } from './dto/abonos.dto';
 import { ActualizarVentaDto } from './dto/actualizarVenta.dto';
+import { AbonoVentaDto } from './dto/abono.dto';
+import moment from 'moment-timezone';
 const { DateTime } = require('luxon');
 
 @Injectable()
@@ -70,7 +72,7 @@ export class PrestamoService {
       direccionResidencia: abonos.direccionResidencia,
     });
     if (cliente) {
-      let abonosCobrador = abonos.abonos.map((abono) => {
+      const abonosCobrador = abonos.abonos.map((abono) => {
         return {
           ...abono,
           cobrador,
@@ -91,6 +93,20 @@ export class PrestamoService {
     }
     return this.handleBDerrors('Ya existe un cliente con ese documento', 409);
   }
+
+  async abonarVenta(abono: AbonoVentaDto, cobrador: string): Promise<boolean> {
+    const venta = await this.prestamoModel.findOne({ _id: abono.venta });
+    if (venta) {
+      venta.abono = [
+        ...venta.abono,
+        { fecha: abono.fecha, monto: abono.monto, cobrador: cobrador },
+      ];
+      await venta.save();
+      return true;
+    }
+    return false;
+  }
+
   async cobrar(cobro: cobroDto, cobrador: string) {
     const prestamo = await this.prestamoModel.findById(cobro.id);
     if (prestamo) {
@@ -301,8 +317,8 @@ export class PrestamoService {
       ventas: 0,
       abono: 0,
     };
-    let cobradores = [[], []];
-    let rutasGraficas = [[], []];
+    const cobradores = [[], []];
+    const rutasGraficas = [[], []];
     const prestamos = await this.prestamoModel.find({
       fecha_inicio: { $regex: '.*' + year + '.*' },
     });
@@ -333,7 +349,7 @@ export class PrestamoService {
           mes.abono += abono.monto;
           if (this.sonFechasIguales(new Date(), new Date(abono.fecha))) {
             hoy.abono += abono.monto;
-            let indexCobrador = cobradores[0].findIndex(
+            const indexCobrador = cobradores[0].findIndex(
               (cobrador) => cobrador == abono.cobrador,
             );
             if (indexCobrador !== -1) {
@@ -342,7 +358,7 @@ export class PrestamoService {
               cobradores[0].push(abono.cobrador);
               cobradores[1].push(abono.monto);
             }
-            let indexRuta = rutasGraficas[0].findIndex(
+            const indexRuta = rutasGraficas[0].findIndex(
               (ruta) => ruta == prestamo.ruta,
             );
             if (indexRuta !== -1) {
@@ -369,7 +385,7 @@ export class PrestamoService {
             mes.abono += abono.monto;
             if (this.sonFechasIguales(new Date(), new Date(abono.fecha))) {
               hoy.abono += abono.monto;
-              let indexCobrador = cobradores[0].findIndex(
+              const indexCobrador = cobradores[0].findIndex(
                 (cobrador) => cobrador == abono.cobrador,
               );
               if (indexCobrador !== -1) {
@@ -378,7 +394,7 @@ export class PrestamoService {
                 cobradores[0].push(abono.cobrador);
                 cobradores[1].push(abono.monto);
               }
-              let indexRuta = rutasGraficas[0].findIndex(
+              const indexRuta = rutasGraficas[0].findIndex(
                 (ruta) => ruta == prestamo.ruta,
               );
               if (indexRuta !== -1) {
@@ -399,7 +415,7 @@ export class PrestamoService {
       mes: mes,
       hoy: hoy,
       cobradores: cobradores,
-      rutas: rutasGraficas
+      rutas: rutasGraficas,
     };
   }
 
