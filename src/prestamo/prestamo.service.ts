@@ -335,17 +335,12 @@ export class PrestamoService {
       const mesArray = prestamo.fecha_inicio.split('-');
       const year = mesArray[0];
       if (prestamo.producto != '') {
-        if (!cantidadPorYear[year]) {
-          cantidadPorYear[year] = { [prestamo.producto]: 1 };
+        if (!cantidadPorYear[prestamo.producto]) {
+          cantidadPorYear[prestamo.producto] = 1;
         } else {
-          // Si el year ya está en el objeto, incrementamos la cantidad del producto
-          if (!cantidadPorYear[year][prestamo.producto]) {
-            cantidadPorYear[year][prestamo.producto] = 1;
-          } else {
-            cantidadPorYear[year][prestamo.producto]++;
+            cantidadPorYear[prestamo.producto]++;
           }
         }
-      }
       // valido las fechas de la venta
       if (parseInt(mesArray[1]) == new Date().getMonth() + 1) {
         mes.ventas += 1;
@@ -390,21 +385,6 @@ export class PrestamoService {
       });
     });
     prestamosViejos.forEach((prestamo) => {
-      const mesArray = prestamo.fecha_inicio.split('-');
-      const year = mesArray[0];
-      if (prestamo.producto != '') {
-        if (!cantidadPorYear[year]) {
-          cantidadPorYear[year] = { [prestamo.producto]: 1 };
-        } else {
-          // Si el year ya está en el objeto, incrementamos la cantidad del producto
-          if (!cantidadPorYear[year][prestamo.producto]) {
-            cantidadPorYear[year][prestamo.producto] = 1;
-          } else {
-            cantidadPorYear[year][prestamo.producto]++;
-          }
-        }
-      }
-
       // Valido las fechas de los abonos
       prestamo.abono.forEach((abono) => {
         if (new Date().getFullYear() == new Date(abono.fecha).getFullYear()) {
@@ -438,11 +418,9 @@ export class PrestamoService {
         }
       });
     });
-    const yearProductos = Object.keys(cantidadPorYear);
-    const graficaProductos = {
-      years: yearProductos,
-      productos: cantidadPorYear,
-    };
+
+   
+  
     return {
       ventas: ventaDataSet,
       abonos: abonoDataSet,
@@ -451,7 +429,10 @@ export class PrestamoService {
       hoy: hoy,
       cobradores: cobradores,
       rutas: rutasGraficas,
-      productosVendidos: graficaProductos,
+      graficaProductos: {
+       label: Object.keys(cantidadPorYear),
+       dataset: Object.values(cantidadPorYear)
+      },
     };
   }
 
