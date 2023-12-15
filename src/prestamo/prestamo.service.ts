@@ -258,12 +258,21 @@ export class PrestamoService {
           completado: false,
         })
         .populate('cliente');
-      const cobrosHoy = cobros.filter((cobro) => {
+        let cobrosHoyD = [];
+      const cobrosHoy = cobros.filter((cobro: any) => {
+        cobro.abono.forEach((abono => {
+          if(this.sonFechasIgualesCobro(abono.fecha, hoyFormateada)) {
+           cobrosHoyD.push({
+            ...cobro._doc,
+            ...abono
+           });
+          }
+        }));
         return cobro.pago_fechas.some((fechas_pago) => {
           return this.sonFechasIgualesCobro(fechas_pago.fecha, hoyFormateada);
         });
       });
-      return cobrosHoy;
+      return [cobrosHoy, cobrosHoyD];
     } catch (error) {
       this.handleBDerrors(error);
     }
