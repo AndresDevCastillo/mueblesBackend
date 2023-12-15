@@ -253,23 +253,76 @@ export class PrestamoService {
           0, // Milisegundos en UTC
         ),
       );
-      const cobros = await this.prestamoModel
+      let fecha = new Date();
+      fecha.setHours(fecha.getHours() - 5);
+      const year = fecha.getFullYear();
+      const month = (fecha.getMonth() + 1).toString().padStart(2, '0');
+      const day = fecha.getDate().toString().padStart(2, '0');
+      const formattedDate = `^${year}-${month}-${day}`;
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      const endOfToday = new Date();
+      endOfToday.setHours(23, 59, 59, 999);
+      const cobrosHoy = await this.prestamoModel
         .find({
           completado: false,
+          $or: [
+            {
+              pago_fechas: {
+                $elemMatch: {
+                  fecha: {
+                    $regex: formattedDate,
+                  },
+                },
+              },
+            },
+            {
+              pago_fechas: {
+                $elemMatch: {
+                  fecha: {
+                    $gte: startOfToday,
+                    $lte: endOfToday,
+                  },
+                },
+              },
+            },
+          ],
         })
         .populate('cliente');
-        let cobrosHoyD = [];
-      const cobrosHoy = cobros.filter((cobro: any) => {
-        cobro.abono.forEach((abono => {
-          if(this.sonFechasIgualesCobro(abono.fecha, hoyFormateada)) {
-           cobrosHoyD.push({
-            ...cobro._doc,
-            ...abono
-           });
+      const cobrosHoyN = await this.prestamoModel
+        .find({
+          $or: [
+            {
+              abono: {
+                $elemMatch: {
+                  fecha: {
+                    $regex: formattedDate,
+                  },
+                },
+              },
+            },
+            {
+              abono: {
+                $elemMatch: {
+                  fecha: {
+                    $gte: startOfToday,
+                    $lte: endOfToday,
+                  },
+                },
+              },
+            },
+          ],
+        })
+        .populate('cliente');
+      let cobrosHoyD = [];
+      cobrosHoyN.forEach((cobro: any) => {
+        cobro.abono.forEach((abono) => {
+          if (this.sonFechasIgualesCobro(abono.fecha, hoyFormateada)) {
+            cobrosHoyD.push({
+              ...cobro._doc,
+              ...abono,
+            });
           }
-        }));
-        return cobro.pago_fechas.some((fechas_pago) => {
-          return this.sonFechasIgualesCobro(fechas_pago.fecha, hoyFormateada);
         });
       });
       return [cobrosHoy, cobrosHoyD];
@@ -347,9 +400,9 @@ export class PrestamoService {
         if (!cantidadPorYear[prestamo.producto]) {
           cantidadPorYear[prestamo.producto] = 1;
         } else {
-            cantidadPorYear[prestamo.producto]++;
-          }
+          cantidadPorYear[prestamo.producto]++;
         }
+      }
       // valido las fechas de la venta
       if (parseInt(mesArray[1]) == new Date().getMonth() + 1) {
         mes.ventas += 1;
@@ -428,8 +481,6 @@ export class PrestamoService {
       });
     });
 
-   
-  
     return {
       ventas: ventaDataSet,
       abonos: abonoDataSet,
@@ -439,8 +490,8 @@ export class PrestamoService {
       cobradores: cobradores,
       rutas: rutasGraficas,
       graficaProductos: {
-       label: Object.keys(cantidadPorYear),
-       dataset: Object.values(cantidadPorYear)
+        label: Object.keys(cantidadPorYear),
+        dataset: Object.values(cantidadPorYear),
       },
     };
   }
