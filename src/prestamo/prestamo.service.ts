@@ -266,27 +266,7 @@ export class PrestamoService {
       const cobrosHoy = await this.prestamoModel
         .find({
           completado: false,
-          $or: [
-            {
-              pago_fechas: {
-                $elemMatch: {
-                  fecha: {
-                    $regex: formattedDate,
-                  },
-                },
-              },
-            },
-            {
-              pago_fechas: {
-                $elemMatch: {
-                  fecha: {
-                    $gte: startOfToday,
-                    $lte: endOfToday,
-                  },
-                },
-              },
-            },
-          ],
+          cuotas: { $gt: 1 },
         })
         .populate('cliente');
       const cobrosHoyN = await this.prestamoModel
