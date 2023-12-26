@@ -331,7 +331,15 @@ export class PrestamoService {
   async estadisticas() {
     const ventaDataSet = new Array(12).fill(0);
     const abonoDataSet = new Array(12).fill(0);
-    const year = new Date().getFullYear();
+    const fecha = new Date();
+    const year = fecha.getFullYear();
+    const month = (fecha.getMonth() + 1).toString().padStart(2, '0');
+    const day = fecha.getDate().toString().padStart(2, '0');
+    const formattedDate = `^${year}-${month}-${day}`;
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
     const semana = [
       'Domingo',
       'Lunes',
@@ -370,12 +378,37 @@ export class PrestamoService {
     const prestamosViejos = await this.prestamoModel.find({
       fecha_inicio: { $not: { $regex: '.*' + year + '.*' } },
     });
+    console.log(formattedDate);
+    console.log(startOfToday);
+    console.log(endOfToday);
+    const cobrosHoyN = await this.prestamoModel.find({
+      $or: [
+        {
+          abono: {
+            $elemMatch: {
+              fecha: {
+                $regex: formattedDate,
+              },
+            },
+          },
+        },
+        {
+          abono: {
+            $elemMatch: {
+              fecha: {
+                $gte: startOfToday,
+                $lte: endOfToday,
+              },
+            },
+          },
+        },
+      ],
+    });
     // Recorro prestamos
     prestamos.forEach((prestamo) => {
       yearC.ventas += 1;
       yearC.total += prestamo.total;
       const mesArray = prestamo.fecha_inicio.split('-');
-      const year = mesArray[0];
       if (prestamo.producto != '') {
         if (!cantidadPorYear[prestamo.producto]) {
           cantidadPorYear[prestamo.producto] = 1;
@@ -399,27 +432,6 @@ export class PrestamoService {
       prestamo.abono.forEach((abono) => {
         if (new Date().getMonth() == new Date(abono.fecha).getMonth()) {
           mes.abono += abono.monto;
-          if (this.sonFechasIguales(new Date(), new Date(abono.fecha))) {
-            hoy.abono += abono.monto;
-            const indexCobrador = cobradores[0].findIndex(
-              (cobrador) => cobrador == abono.cobrador,
-            );
-            if (indexCobrador !== -1) {
-              cobradores[1][indexCobrador] += abono.monto;
-            } else {
-              cobradores[0].push(abono.cobrador);
-              cobradores[1].push(abono.monto);
-            }
-            const indexRuta = rutasGraficas[0].findIndex(
-              (ruta) => ruta == prestamo.ruta,
-            );
-            if (indexRuta !== -1) {
-              rutasGraficas[1][indexRuta] += abono.monto;
-            } else {
-              rutasGraficas[0].push(prestamo.ruta);
-              rutasGraficas[1].push(abono.monto);
-            }
-          }
         }
         yearC.abono += abono.monto;
         const mesAbono = new Date(abono.fecha).toISOString().split('-');
@@ -435,27 +447,31 @@ export class PrestamoService {
           abonoDataSet[parseInt(mesAbono[1]) - 1] += abono.monto;
           if (new Date().getMonth() == new Date(abono.fecha).getMonth()) {
             mes.abono += abono.monto;
-            if (this.sonFechasIguales(new Date(), new Date(abono.fecha))) {
-              hoy.abono += abono.monto;
-              const indexCobrador = cobradores[0].findIndex(
-                (cobrador) => cobrador == abono.cobrador,
-              );
-              if (indexCobrador !== -1) {
-                cobradores[1][indexCobrador] += abono.monto;
-              } else {
-                cobradores[0].push(abono.cobrador);
-                cobradores[1].push(abono.monto);
-              }
-              const indexRuta = rutasGraficas[0].findIndex(
-                (ruta) => ruta == prestamo.ruta,
-              );
-              if (indexRuta !== -1) {
-                rutasGraficas[1][indexRuta] += abono.monto;
-              } else {
-                rutasGraficas[0].push(prestamo.ruta);
-                rutasGraficas[1].push(abono.monto);
-              }
-            }
+          }
+        }
+      });
+    });
+    cobrosHoyN.forEach((prestamo) => {
+      prestamo.abono.forEach((abono) => {
+        if (this.sonFechasIguales(fecha, new Date(abono.fecha))) {
+          hoy.abono += abono.monto;
+          const indexCobrador = cobradores[0].findIndex(
+            (cobrador) => cobrador == abono.cobrador,
+          );
+          if (indexCobrador !== -1) {
+            cobradores[1][indexCobrador] += abono.monto;
+          } else {
+            cobradores[0].push(abono.cobrador);
+            cobradores[1].push(abono.monto);
+          }
+          const indexRuta = rutasGraficas[0].findIndex(
+            (ruta) => ruta == prestamo.ruta,
+          );
+          if (indexRuta !== -1) {
+            rutasGraficas[1][indexRuta] += abono.monto;
+          } else {
+            rutasGraficas[0].push(prestamo.ruta);
+            rutasGraficas[1].push(abono.monto);
           }
         }
       });
