@@ -2,7 +2,7 @@ import { HttpException, Injectable } from '@nestjs/common';
 import { CreateClienteDto, UpdateClienteDto } from './dto/cliente.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Cliente } from './schema/cliente.schema';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { ObjectId } from 'mongodb';
 import { Inventario } from 'src/inventario/schema/inventario.schema';
 import { Prestamo } from 'src/prestamo/schema/prestamo.schema';
@@ -122,6 +122,26 @@ export class ClienteService {
     } catch (error) {
       this.handleBDerrors(error);
     }
+  }
+
+  async updateRutaClientes() {
+    const p_id = (await this.puebloModel.find().select('_id')).map(
+      (pueblo) => new mongoose.Types.ObjectId(pueblo._id),
+    );
+    const puebloSinRuta = await this.getPuebloSinRuta();
+    return await this.clienteModel
+      .updateMany(
+        { direccion: { $nin: p_id } },
+        {
+          $set: { direccion: puebloSinRuta._id },
+        },
+      )
+      .then((clientes) => {
+        return `${clientes.modifiedCount} clientes actualizados sus rutas a Sin ruta`;
+      })
+      .catch((err) => {
+        return this.handleBDerrors(err, 500);
+      });
   }
 
   async remove(id: string) {
@@ -291,7 +311,7 @@ export class ClienteService {
             {
               fecha: fechaPago,
               monto: monto,
-              cobrador: cobrador
+              cobrador: cobrador,
             },
           ];
 
@@ -327,14 +347,14 @@ export class ClienteService {
       message: `Se agregaron ${clientesG.length} clientes, clientes omitidos ${clientesExist.length}`,
     };
   }
-  async actualizarRutaCliente(idCliente: string, idRuta: string){
+  async actualizarRutaCliente(idCliente: string, idRuta: string) {
     try {
       await this.clienteModel.findByIdAndUpdate(idCliente, {
         $set: {
-          direccion: idRuta
-        }
-      })
-    } catch(error) {
+          direccion: idRuta,
+        },
+      });
+    } catch (error) {
       this.handleBDerrors(error);
     }
   }
