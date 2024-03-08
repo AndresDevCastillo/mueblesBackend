@@ -234,7 +234,10 @@ export class PrestamoService {
 
   async findAll() {
     try {
-      return await this.prestamoModel.find().populate('cliente');
+      return await this.prestamoModel.find().populate({
+        path: 'cliente',
+        populate: 'direccion',
+      });
     } catch (error) {
       this.handleBDerrors(error);
     }
@@ -268,7 +271,10 @@ export class PrestamoService {
           completado: false,
           cuotas: { $gt: 1 },
         })
-        .populate('cliente');
+        .populate({
+          path: 'cliente',
+          populate: 'direccion',
+        });
       const cobrosHoyN = await this.prestamoModel
         .find({
           $or: [
@@ -293,7 +299,10 @@ export class PrestamoService {
             },
           ],
         })
-        .populate('cliente');
+        .populate({
+          path: 'cliente',
+          populate: 'direccion',
+        });
       let cobrosHoyD = [];
       cobrosHoyN.forEach((cobro: any) => {
         cobro.abono.forEach((abono) => {
@@ -378,9 +387,6 @@ export class PrestamoService {
     const prestamosViejos = await this.prestamoModel.find({
       fecha_inicio: { $not: { $regex: '.*' + year + '.*' } },
     });
-    console.log(formattedDate);
-    console.log(startOfToday);
-    console.log(endOfToday);
     const cobrosHoyN = await this.prestamoModel.find({
       $or: [
         {
