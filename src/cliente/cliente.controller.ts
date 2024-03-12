@@ -44,13 +44,21 @@ export class ClienteController {
       }),
     }),
   )
-  async subirClientes(@UploadedFile() excel: Express.Multer.File, @Request() {user}) {
+  async subirClientes(
+    @UploadedFile() excel: Express.Multer.File,
+    @Request() { user },
+  ) {
     return await this.clienteService.subirClientes(excel, user[0].nombre);
   }
 
   @Get()
   findAll() {
     return this.clienteService.findAll();
+  }
+
+  @Get('/sinRuta')
+  async clientesSinRuta() {
+    return await this.clienteService.updateRutaClientes();
   }
 
   @Get('/:id')

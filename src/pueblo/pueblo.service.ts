@@ -2,13 +2,16 @@ import { HttpException, Inject, Injectable } from '@nestjs/common';
 import { CreatePuebloDto, UpdatePuebloDto } from './dto/pueblo.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Pueblo } from './schema/pueblo.schema';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { UsuarioService } from 'src/usuario/usuario.service';
+import { Cliente } from 'src/cliente/schema/cliente.schema';
+import { ObjectId } from 'mongodb';
 
 @Injectable()
 export class PuebloService {
   constructor(
     @InjectModel(Pueblo.name) private puebloModel: Model<Pueblo>,
+    @InjectModel(Cliente.name) private clienteModel: Model<Cliente>,
     @Inject(UsuarioService) private usuarioService: UsuarioService,
   ) {}
   async create(pueblo: CreatePuebloDto) {
@@ -44,7 +47,28 @@ export class PuebloService {
 
   async remove(id: string) {
     try {
-      return await this.puebloModel.findByIdAndDelete(id);
+      const cRuta = await this.clienteModel.find({
+        direccion: new mongoose.Types.ObjectId(id),
+      });
+      return cRuta.length > 0
+        ? {
+            delete: false,
+            message: 'No puedes eliminar esta ruta, tiene clientes asociados',
+          }
+        : await this.puebloModel
+            .findByIdAndDelete(id)
+            .then(() => {
+              return {
+                delete: true,
+                message: 'Ruta eliminada',
+              };
+            })
+            .catch((error) => {
+              return {
+                delete: false,
+                message: error,
+              };
+            });
     } catch (error) {
       this.handleBDerrors(error);
     }

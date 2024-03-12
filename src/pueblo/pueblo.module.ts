@@ -5,10 +5,17 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Pueblo, PuebloSchema } from './schema/pueblo.schema';
 import { UsuarioModule } from 'src/usuario/usuario.module';
 import { UsuarioService } from 'src/usuario/usuario.service';
+import { Cliente } from 'src/cliente/schema/cliente.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Pueblo.name, schema: PuebloSchema }]),
+    MongooseModule.forFeature([
+      { name: Pueblo.name, schema: PuebloSchema },
+      {
+        name: Cliente.name,
+        schema: PuebloSchema,
+      },
+    ]),
     UsuarioModule,
   ],
   controllers: [PuebloController],
