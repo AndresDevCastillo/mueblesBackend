@@ -15,7 +15,7 @@ import { ValidateObjectidPipe } from 'src/common/validate-objectid/validate-obje
 import { JwtAuthGuard } from 'src/guard/jwt-auth.guard';
 import { AbonosDto } from './dto/abonos.dto';
 import { ActualizarVentaDto } from './dto/actualizarVenta.dto';
-import { AbonoVentaDto } from './dto/abono.dto';
+import { AbonoVentaDto, dateAbonoFind } from './dto/abono.dto';
 
 @Controller('prestamo')
 @UseGuards(JwtAuthGuard)
@@ -44,6 +44,12 @@ export class PrestamoController {
   @Get('/cobrar')
   async findCobrar() {
     return await this.prestamoService.findCobrar();
+  }
+
+  @Post('/cobroEspecifico')
+  async findCobroEspecifico(@Body() date : dateAbonoFind) {
+    console.log(date);
+    return await this.prestamoService.findCobroEspecifico(date);
   }
 
   @Get('/clientes')

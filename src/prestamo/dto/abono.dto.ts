@@ -1,4 +1,4 @@
-import { IsDateString, IsMongoId, IsNumber } from 'class-validator';
+import { IsDateString, IsMongoId, IsNumber, IsString } from 'class-validator';
 
 export class AbonoVentaDto {
   @IsMongoId()
@@ -9,4 +9,9 @@ export class AbonoVentaDto {
 
   @IsDateString()
   readonly fecha: Date;
+}
+
+export class dateAbonoFind {
+    @IsString()
+    date: string;
 }

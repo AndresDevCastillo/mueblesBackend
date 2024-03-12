@@ -14,7 +14,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { CronMongo } from 'src/cron/schema/cron.schema';
 import { AbonosDto } from './dto/abonos.dto';
 import { ActualizarVentaDto } from './dto/actualizarVenta.dto';
-import { AbonoVentaDto } from './dto/abono.dto';
+import { AbonoVentaDto, dateAbonoFind } from './dto/abono.dto';
 import moment from 'moment-timezone';
 const { DateTime } = require('luxon');
 
@@ -256,7 +256,7 @@ export class PrestamoService {
           0, // Milisegundos en UTC
         ),
       );
-      let fecha = new Date();
+      const fecha = new Date();
       fecha.setHours(fecha.getHours() - 5);
       const year = fecha.getFullYear();
       const month = (fecha.getMonth() + 1).toString().padStart(2, '0');
@@ -303,7 +303,7 @@ export class PrestamoService {
           path: 'cliente',
           populate: 'direccion',
         });
-      let cobrosHoyD = [];
+      const cobrosHoyD = [];
       cobrosHoyN.forEach((cobro: any) => {
         cobro.abono.forEach((abono) => {
           if (this.sonFechasIgualesCobro(abono.fecha, hoyFormateada)) {
@@ -315,6 +315,75 @@ export class PrestamoService {
         });
       });
       return [cobrosHoy, cobrosHoyD];
+    } catch (error) {
+      this.handleBDerrors(error);
+    }
+  }
+
+  async findCobroEspecifico(date: dateAbonoFind) {
+    try {
+      const hoy = new Date(date.date);
+      const hoyFormateada = new Date(
+        Date.UTC(
+          hoy.getFullYear(),
+          hoy.getMonth(),
+          hoy.getDate(),
+          0, // Hora en UTC
+          0, // Minutos en UTC
+          0, // Segundos en UTC
+          0, // Milisegundos en UTC
+        ),
+      );
+      const fecha = new Date(date.date);
+      fecha.setHours(fecha.getHours() - 5);
+      const year = fecha.getFullYear();
+      const month = (fecha.getMonth() + 1).toString().padStart(2, '0');
+      const day = fecha.getDate().toString().padStart(2, '0');
+      const formattedDate = `^${year}-${month}-${day}`;
+      const startOfToday = new Date(date.date);
+      startOfToday.setHours(0, 0, 0, 0);
+      const endOfToday = new Date(date.date);
+      endOfToday.setHours(23, 59, 59, 999);
+       const cobrosHoyN = await this.prestamoModel
+        .find({
+          $or: [
+            {
+              abono: {
+                $elemMatch: {
+                  fecha: {
+                    $regex: formattedDate,
+                  },
+                },
+              },
+            },
+            {
+              abono: {
+                $elemMatch: {
+                  fecha: {
+                    $gte: startOfToday,
+                    $lte: endOfToday,
+                  },
+                },
+              },
+            },
+          ],
+        })
+        .populate({
+          path: 'cliente',
+          populate: 'direccion',
+        });
+      const cobrosHoyD = [];
+      cobrosHoyN.forEach((cobro: any) => {
+        cobro.abono.forEach((abono) => {
+          if (this.sonFechasIgualesCobro(abono.fecha, hoyFormateada)) {
+            cobrosHoyD.push({
+              ...cobro._doc,
+              ...abono,
+            });
+          }
+        });
+      });
+      return cobrosHoyD;
     } catch (error) {
       this.handleBDerrors(error);
     }
